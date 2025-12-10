@@ -8,13 +8,12 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Admin credentials (hardcoded for demo)
+ 
   const ADMIN_EMAIL = 'admin@foodyham.com';
-  const ADMIN_PASSWORD = 'admin123';
+  const ADMIN_PASSWORD = 'admin1234';
 
-  // Initialize with some demo users for testing
+  
   useEffect(() => {
-    // Initialize localStorage with some demo users if empty
     const existingUsers = JSON.parse(localStorage.getItem('foodyham_users'));
     if (!existingUsers) {
       const demoUsers = [
@@ -25,18 +24,11 @@ export const AuthProvider = ({ children }) => {
           password: 'password123',
           createdAt: new Date().toISOString()
         },
-        {
-          id: 'user-2',
-          name: 'Jane Smith',
-          email: 'jane@example.com',
-          password: 'password123',
-          createdAt: new Date().toISOString()
-        }
+        
       ];
       localStorage.setItem('foodyham_users', JSON.stringify(demoUsers));
     }
 
-    // Check if user is logged in on app load
     const storedUser = localStorage.getItem('foodyham_user');
     
     if (storedUser) {
@@ -114,7 +106,7 @@ export const AuthProvider = ({ children }) => {
           id: `user-${Date.now()}`,
           name,
           email,
-          password, // In real app, hash this!
+          password, 
           createdAt: new Date().toISOString(),
           address: '',
           phone: '',

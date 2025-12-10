@@ -167,7 +167,7 @@ function CartPage() {
             </Link>
             
             <div className="mt-4 text-sm text-gray-500">
-              <p className="mb-1">• Free delivery on orders over $50</p>
+              <p className="mb-1">• Free delivery on orders over $100</p>
               <p className="mb-1">• Estimated delivery: 30-45 minutes</p>
               <p>• Secure payment processing</p>
             </div>

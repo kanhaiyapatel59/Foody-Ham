@@ -31,11 +31,11 @@ function Footer() {
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <FaEnvelope className="text-orange-400" />
-                <span className="text-gray-300">info@foodyham.com</span>
+                <span className="text-gray-300">kanhaiyapatel383@gmail.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <FaPhone className="text-orange-400" />
-                <span className="text-gray-300">+1-123-456-7890</span>
+                <span className="text-gray-300">+91-9153848790</span>
               </div>
             </div>
           </div>
@@ -44,13 +44,13 @@ function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-4">Follow Us</h4>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-blue-400 transition">
+              <a href="https://www.facebook.com/profile.php?id=100040335400748" className="text-gray-300 hover:text-blue-400 transition">
                 <FaFacebook size={24} />
               </a>
-              <a href="#" className="text-gray-300 hover:text-blue-400 transition">
+              <a href="https://x.com/Kanhaiyapatel59" className="text-gray-300 hover:text-blue-400 transition">
                 <FaTwitter size={24} />
               </a>
-              <a href="#" className="text-gray-300 hover:text-pink-400 transition">
+              <a href="https://www.instagram.com/kanhaiya_patel_59/" className="text-gray-300 hover:text-pink-400 transition">
                 <FaInstagram size={24} />
               </a>
             </div>

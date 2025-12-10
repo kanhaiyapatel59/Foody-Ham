@@ -168,26 +168,24 @@ function LoginPage() {
           </button>
         </div>
 
-        <div className="text-center text-sm text-gray-500 mt-6 pt-6 border-t">
+        {/* <div className="text-center text-sm text-gray-500 mt-6 pt-6 border-t"> */}
           {/* <p className="font-semibold mb-2">Demo Credentials:</p> */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> */}
             {/* <div className="text-left">
               <p className="font-medium">Admin Account:</p>
               <p>Email: admin@foodyham.com</p>
-              <p>Password: admin123</p>
+              <p>Password: admin1234</p>
             </div> */}
             {/* <div className="text-left">
               <p className="font-medium">Demo Users:</p>
               <p>Email: john@example.com</p>
               <p>Password: password123</p>
-              <p>Email: jane@example.com</p>
-              <p>Password: password123</p>
             </div> */}
-          </div>
+          {/* </div> */}
           {/* <p className="mt-4">Or create your own account!</p> */}
         </div>
-      </div>
-    </div>
+      // </div>
+    // </div>
   );
 }
 
