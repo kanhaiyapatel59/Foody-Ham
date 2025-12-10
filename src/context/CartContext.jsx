@@ -20,16 +20,16 @@ export const CartProvider = ({ children }) => {
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
+
   useEffect(() => {
     localStorage.setItem('foodyham_cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
   const addToCart = useCallback((product, quantity = 1) => {
-    console.log('Adding to cart:', product, quantity); // Debug log
+    console.log('Adding to cart:', product, quantity); 
     setCartItems(prevItems => {
       const existingItem = prevItems.find(item => {
-        // Compare both id and type (default vs custom)
+       
         return item.id === product.id;
       });
       
