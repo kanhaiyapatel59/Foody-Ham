@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaSave, FaLock } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaSave, FaLock, FaCalendar, FaUserShield } from 'react-icons/fa';
 
 function ProfilePage() {
-  const { user, updateProfile, changePassword } = useAuth();
+  const { user, updateProfile, changePassword, loading: authLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -19,6 +19,7 @@ function ProfilePage() {
   });
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Initialize form data when user loads
   useEffect(() => {
@@ -54,6 +55,7 @@ function ProfilePage() {
     e.preventDefault();
     setError('');
     setMessage('');
+    setLoading(true);
 
     try {
       await updateProfile(formData);
@@ -61,6 +63,8 @@ function ProfilePage() {
       setIsEditing(false);
     } catch (err) {
       setError(err.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -68,16 +72,19 @@ function ProfilePage() {
     e.preventDefault();
     setError('');
     setMessage('');
+    setLoading(true);
 
     // Validate passwords match
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setError('New passwords do not match');
+      setLoading(false);
       return;
     }
 
     // Validate password length
     if (passwordData.newPassword.length < 6) {
       setError('New password must be at least 6 characters');
+      setLoading(false);
       return;
     }
 
@@ -92,8 +99,18 @@ function ProfilePage() {
       setIsChangingPassword(false);
     } catch (err) {
       setError(err.message || 'Failed to change password');
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <div className="text-lg text-gray-600">Loading profile...</div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -104,15 +121,29 @@ function ProfilePage() {
     );
   }
 
+  // Format date from backend (handle both createdAt and created_at)
+  const getMemberSince = () => {
+    const date = user.createdAt || user.created_at;
+    if (date) {
+      return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+    return 'N/A';
+  };
+
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
-          {!isEditing && !isChangingPassword && (
+          {!isEditing && !isChangingPassword && !loading && (
             <button
               onClick={() => setIsEditing(true)}
-              className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition flex items-center gap-2"
+              className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition flex items-center gap-2 disabled:opacity-50"
+              disabled={loading}
             >
               <FaEdit /> Edit Profile
             </button>
@@ -138,7 +169,11 @@ function ProfilePage() {
             <div className="bg-white rounded-lg shadow-lg p-8">
               <div className="flex items-center mb-6">
                 <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mr-4">
-                  <FaUser className="text-3xl text-orange-500" />
+                  {user.isAdmin ? (
+                    <FaUserShield className="text-3xl text-orange-500" />
+                  ) : (
+                    <FaUser className="text-3xl text-orange-500" />
+                  )}
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800">{user.name}</h2>
@@ -180,10 +215,19 @@ function ProfilePage() {
                   </div>
                 )}
 
+                <div className="flex items-center">
+                  <FaCalendar className="text-gray-400 mr-3" />
+                  <div>
+                    <div className="text-sm text-gray-500">Member Since</div>
+                    <div className="font-medium">{getMemberSince()}</div>
+                  </div>
+                </div>
+
                 <div className="pt-4">
                   <button
                     onClick={() => setIsChangingPassword(true)}
-                    className="text-orange-500 hover:text-orange-600 flex items-center gap-2"
+                    className="text-orange-500 hover:text-orange-600 flex items-center gap-2 disabled:opacity-50"
+                    disabled={loading}
                   >
                     <FaLock /> Change Password
                   </button>
@@ -204,9 +248,9 @@ function ProfilePage() {
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-700 mb-2">Member Since</h4>
-                  <p className="text-gray-600">
-                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                  <h4 className="font-semibold text-gray-700 mb-2">User ID</h4>
+                  <p className="text-gray-600 text-sm font-mono break-all">
+                    {user._id || user.id || 'N/A'}
                   </p>
                 </div>
 
@@ -215,6 +259,13 @@ function ProfilePage() {
                   <span className="inline-block bg-green-100 text-green-800 text-sm px-3 py-1 rounded">
                     Active
                   </span>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-700 mb-2">Role</h4>
+                  <p className="text-gray-600 capitalize">
+                    {user.role || 'user'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -227,7 +278,7 @@ function ProfilePage() {
             <form onSubmit={handleSaveProfile}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label className="block text-gray-700 mb-2">Full Name</label>
+                  <label className="block text-gray-700 mb-2">Full Name *</label>
                   <div className="relative">
                     <FaUser className="absolute left-3 top-3 text-gray-400" />
                     <input
@@ -237,12 +288,13 @@ function ProfilePage() {
                       onChange={handleInputChange}
                       className="w-full pl-10 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
                       required
+                      disabled={loading}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 mb-2">Email</label>
+                  <label className="block text-gray-700 mb-2">Email *</label>
                   <div className="relative">
                     <FaEnvelope className="absolute left-3 top-3 text-gray-400" />
                     <input
@@ -252,6 +304,7 @@ function ProfilePage() {
                       onChange={handleInputChange}
                       className="w-full pl-10 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
                       required
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -266,6 +319,7 @@ function ProfilePage() {
                       value={formData.phone}
                       onChange={handleInputChange}
                       className="w-full pl-10 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -280,6 +334,7 @@ function ProfilePage() {
                       value={formData.address}
                       onChange={handleInputChange}
                       className="w-full pl-10 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -289,15 +344,26 @@ function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition"
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition disabled:opacity-50"
+                  disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600 transition flex items-center gap-2"
+                  className="bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600 transition flex items-center gap-2 disabled:opacity-50"
+                  disabled={loading}
                 >
-                  <FaSave /> Save Changes
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <FaSave /> Save Changes
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -310,7 +376,7 @@ function ProfilePage() {
             <form onSubmit={handleChangePassword}>
               <div className="space-y-6 mb-6">
                 <div>
-                  <label className="block text-gray-700 mb-2">Current Password</label>
+                  <label className="block text-gray-700 mb-2">Current Password *</label>
                   <div className="relative">
                     <FaLock className="absolute left-3 top-3 text-gray-400" />
                     <input
@@ -320,12 +386,13 @@ function ProfilePage() {
                       onChange={handlePasswordChange}
                       className="w-full pl-10 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
                       required
+                      disabled={loading}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 mb-2">New Password</label>
+                  <label className="block text-gray-700 mb-2">New Password *</label>
                   <div className="relative">
                     <FaLock className="absolute left-3 top-3 text-gray-400" />
                     <input
@@ -335,13 +402,14 @@ function ProfilePage() {
                       onChange={handlePasswordChange}
                       className="w-full pl-10 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
                       required
+                      disabled={loading}
                     />
                   </div>
                   <p className="text-sm text-gray-500 mt-1">Must be at least 6 characters long</p>
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 mb-2">Confirm New Password</label>
+                  <label className="block text-gray-700 mb-2">Confirm New Password *</label>
                   <div className="relative">
                     <FaLock className="absolute left-3 top-3 text-gray-400" />
                     <input
@@ -351,6 +419,7 @@ function ProfilePage() {
                       onChange={handlePasswordChange}
                       className="w-full pl-10 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
                       required
+                      disabled={loading}
                     />
                   </div>
                 </div>
@@ -360,15 +429,26 @@ function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setIsChangingPassword(false)}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition"
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition disabled:opacity-50"
+                  disabled={loading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600 transition flex items-center gap-2"
+                  className="bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600 transition flex items-center gap-2 disabled:opacity-50"
+                  disabled={loading}
                 >
-                  <FaLock /> Change Password
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <FaLock /> Change Password
+                    </>
+                  )}
                 </button>
               </div>
             </form>

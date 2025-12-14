@@ -6,18 +6,29 @@ export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Load cart from localStorage on mount
   useEffect(() => {
+    setLoading(true);
     const savedCart = localStorage.getItem('foodyham_cart');
+    
     if (savedCart) {
       try {
-        setCartItems(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        // Ensure all prices are numbers
+        const cartWithNumberPrices = parsedCart.map(item => ({
+          ...item,
+          price: typeof item.price === 'string' ? parseFloat(item.price) : item.price
+        }));
+        setCartItems(cartWithNumberPrices);
       } catch (error) {
         console.error('Error parsing cart from localStorage:', error);
         setCartItems([]);
       }
     }
+    
+    setLoading(false);
   }, []);
 
   // Save cart to localStorage whenever it changes
@@ -26,12 +37,14 @@ export const CartProvider = ({ children }) => {
   }, [cartItems]);
 
   const addToCart = useCallback((product, quantity = 1) => {
-    console.log('Adding to cart:', product, quantity); // Debug log
+    // Ensure price is a number
+    const productWithNumberPrice = {
+      ...product,
+      price: typeof product.price === 'string' ? parseFloat(product.price) : product.price
+    };
+
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => {
-        // Compare both id and type (default vs custom)
-        return item.id === product.id;
-      });
+      const existingItem = prevItems.find(item => item.id === product.id);
       
       if (existingItem) {
         return prevItems.map(item =>
@@ -40,7 +53,7 @@ export const CartProvider = ({ children }) => {
             : item
         );
       } else {
-        return [...prevItems, { ...product, quantity }];
+        return [...prevItems, { ...productWithNumberPrice, quantity }];
       }
     });
   }, []);
@@ -67,7 +80,10 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const getCartTotal = useCallback(() => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cartItems.reduce((total, item) => {
+      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+      return total + (price * item.quantity);
+    }, 0);
   }, [cartItems]);
 
   const getCartCount = useCallback(() => {
@@ -81,7 +97,8 @@ export const CartProvider = ({ children }) => {
     updateQuantity,
     clearCart,
     getCartTotal,
-    getCartCount
+    getCartCount,
+    loading
   };
 
   return (

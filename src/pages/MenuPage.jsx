@@ -1,71 +1,133 @@
 import React, { useState, useEffect } from 'react';
 import FoodCard from '../components/FoodCard';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const defaultMenuItems = [
-  {
-    id: 1,
-    name: "Classic Cheeseburger",
-    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop",
-    description: "Juicy beef patty with melted cheese, fresh vegetables and special sauce.",
-    price: 11.99
+// Create axios instance
+const api = axios.create({
+  baseURL: 'http://localhost:3000/api',
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
   },
-  {
-    id: 2,
-    name: "Margherita Pizza",
-    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&auto=format&fit=crop",
-    description: "Classic pizza with fresh mozzarella, basil and tomato sauce.",
-    price: 14.99
+});
+
+// Add token to requests if available
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   },
-  {
-    id: 3,
-    name: "Caesar Salad",
-    image: "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&auto=format&fit=crop",
-    description: "Crisp romaine lettuce with Caesar dressing, croutons and parmesan.",
-    price: 9.99
+  (error) => {
+    return Promise.reject(error);
   }
-  
-];
+);
 
 function MenuPage() {
-  const [menuItems, setMenuItems] = useState(defaultMenuItems);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-
   useEffect(() => {
-    const customProducts = JSON.parse(localStorage.getItem('customProducts') || '[]');
-
-    const allProducts = [...defaultMenuItems, ...customProducts];
-    setMenuItems(allProducts);
+    fetchProducts();
   }, []);
 
-  const handleProductClick = (item) => {
-    if (item.id > 3) { 
-      navigate(`/product/custom-${item.id}`, { state: { product: item } });
-    } else {
-      navigate(`/product/${item.id}`);
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await api.get('/products');
+      
+      if (response.data.success) {
+        // Transform backend data to match frontend format
+        const products = response.data.data.map(product => ({
+          id: product._id || product.id,
+          name: product.name,
+          image: product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop',
+          description: product.description,
+          price: product.price,
+          category: product.category,
+          // Include other fields if needed
+          ...(product._id && { _id: product._id }) // Keep MongoDB _id if exists
+        }));
+        
+        setMenuItems(products);
+      } else {
+        setError('Failed to load products');
+      }
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError(err.response?.data?.message || 'Failed to load products. Please try again.');
+      
+      // Fallback to localStorage custom products if API fails
+      const customProducts = JSON.parse(localStorage.getItem('customProducts') || '[]');
+      setMenuItems(customProducts);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleProductClick = (item) => {
+    navigate(`/product/${item.id}`, { state: { product: item } });
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg text-gray-600">Loading products...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">{error}</div>
+          <button
+            onClick={fetchProducts}
+            className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-4xl font-bold text-center mb-4 text-gray-800">Our Menu</h1>
       <p className="text-center text-gray-600 mb-8">
-        {menuItems.length > 3 ? `${menuItems.length - 3} custom products added` : ''}
+        {menuItems.length} delicious items available
       </p>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {menuItems.map(item => (
-          <div key={item.id} onClick={() => handleProductClick(item)} className="cursor-pointer">
-            <FoodCard {...item} />
-            {item.id > 3 && (
-              <div className="text-xs text-green-600 mt-2 text-center">
-                ✓ Custom Product
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      {menuItems.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-600 text-lg">No products available yet.</p>
+          <p className="text-gray-500 mt-2">Check back soon or add your own products!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {menuItems.map(item => (
+            <div key={item.id} onClick={() => handleProductClick(item)} className="cursor-pointer">
+              <FoodCard {...item} />
+              {item.category && (
+                <div className="text-xs text-blue-600 mt-2 text-center">
+                  {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

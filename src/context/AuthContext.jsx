@@ -1,219 +1,150 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import axios from "axios";
 
+/* =========================
+   Axios Instance
+========================= */
+export const api = axios.create({
+  baseURL: "http://localhost:3000/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// ✅ Attach token automatically to every request
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token && token !== "undefined") {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+/* =========================
+   Auth Context
+========================= */
 const AuthContext = createContext();
-
 export const useAuth = () => useContext(AuthContext);
 
+/* =========================
+   Auth Provider
+========================= */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Admin credentials (hardcoded for demo)
-  const ADMIN_EMAIL = 'admin@foodyham.com';
-  const ADMIN_PASSWORD = 'admin123';
-
-  // Initialize with some demo users for testing
+  /* =========================
+     INIT AUTH (ON APP LOAD)
+  ========================= */
   useEffect(() => {
-    // Initialize localStorage with some demo users if empty
-    const existingUsers = JSON.parse(localStorage.getItem('foodyham_users'));
-    if (!existingUsers) {
-      const demoUsers = [
-        {
-          id: 'user-1',
-          name: 'John Doe',
-          email: 'john@example.com',
-          password: 'password123',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'user-2',
-          name: 'Jane Smith',
-          email: 'jane@example.com',
-          password: 'password123',
-          createdAt: new Date().toISOString()
-        }
-      ];
-      localStorage.setItem('foodyham_users', JSON.stringify(demoUsers));
-    }
+    const initAuth = () => {
+      const storedUser = localStorage.getItem("user");
+      const storedToken = localStorage.getItem("token");
 
-    // Check if user is logged in on app load
-    const storedUser = localStorage.getItem('foodyham_user');
-    
-    if (storedUser) {
+      if (!storedUser || !storedToken || storedToken === "undefined") {
+        setLoading(false);
+        return;
+      }
+
       setUser(JSON.parse(storedUser));
-    }
-    
-    setLoading(false);
+      setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
-  const login = (email, password) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        // Check if admin
-        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-          const adminUser = {
-            id: 'admin-1',
-            email: ADMIN_EMAIL,
-            name: 'Admin',
-            role: 'admin',
-            isAdmin: true
-          };
-          setUser(adminUser);
-          localStorage.setItem('foodyham_user', JSON.stringify(adminUser));
-          resolve(adminUser);
-          return;
-        } 
-        
-        // Check regular users
-        const users = JSON.parse(localStorage.getItem('foodyham_users') || '[]');
-        const foundUser = users.find(u => u.email === email && u.password === password);
-        
-        if (foundUser) {
-          const userData = {
-            id: foundUser.id,
-            email: foundUser.email,
-            name: foundUser.name,
-            role: 'user',
-            isAdmin: false
-          };
-          setUser(userData);
-          localStorage.setItem('foodyham_user', JSON.stringify(userData));
-          resolve(userData);
-        } else {
-          reject(new Error('Invalid email or password. Please register first.'));
-        }
-      }, 500);
-    });
+  /* =========================
+     LOGIN (FIXED)
+  ========================= */
+  const login = async (email, password) => {
+    setError("");
+
+    const res = await api.post("/auth/login", { email, password });
+
+    const backendUser = res.data.data;
+    const token = backendUser.token;
+
+    if (!token) {
+      throw new Error("Token missing from backend");
+    }
+
+    // ✅ STORE TOKEN PROPERLY
+    localStorage.setItem("token", token);
+
+    // ❌ REMOVE token from user object
+    const { token: _, ...cleanUser } = backendUser;
+
+    const userData = {
+      ...cleanUser,
+      isAdmin: cleanUser.role === "admin",
+    };
+
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+
+    return userData;
   };
 
-  const register = (name, email, password) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const users = JSON.parse(localStorage.getItem('foodyham_users') || '[]');
-        
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-          reject(new Error('Please enter a valid email address'));
-          return;
-        }
+  /* =========================
+     REGISTER (FIXED)
+  ========================= */
+  const register = async (name, email, password) => {
+    setError("");
 
-        // Check if user already exists
-        if (users.some(u => u.email === email)) {
-          reject(new Error('User already exists with this email'));
-          return;
-        }
-
-        // Validate password length
-        if (password.length < 6) {
-          reject(new Error('Password must be at least 6 characters long'));
-          return;
-        }
-
-        const newUser = {
-          id: `user-${Date.now()}`,
-          name,
-          email,
-          password, // In real app, hash this!
-          createdAt: new Date().toISOString(),
-          address: '',
-          phone: '',
-          preferences: []
-        };
-
-        users.push(newUser);
-        localStorage.setItem('foodyham_users', JSON.stringify(users));
-
-        // Auto login after registration
-        const userData = {
-          id: newUser.id,
-          email: newUser.email,
-          name: newUser.name,
-          role: 'user',
-          isAdmin: false
-        };
-        
-        setUser(userData);
-        localStorage.setItem('foodyham_user', JSON.stringify(userData));
-        resolve(userData);
-      }, 500);
+    const res = await api.post("/auth/register", {
+      name,
+      email,
+      password,
     });
+
+    const backendUser = res.data.data;
+    const token = backendUser.token;
+
+    if (!token) {
+      throw new Error("Token missing from backend");
+    }
+
+    localStorage.setItem("token", token);
+
+    const { token: _, ...cleanUser } = backendUser;
+
+    const userData = {
+      ...cleanUser,
+      isAdmin: cleanUser.role === "admin",
+    };
+
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+
+    return userData;
   };
 
-  const updateProfile = (updates) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        try {
-          const users = JSON.parse(localStorage.getItem('foodyham_users') || '[]');
-          const updatedUsers = users.map(u => 
-            u.id === user.id ? { ...u, ...updates } : u
-          );
-          
-          localStorage.setItem('foodyham_users', JSON.stringify(updatedUsers));
-          
-          // Update current user
-          const updatedUser = { ...user, ...updates };
-          setUser(updatedUser);
-          localStorage.setItem('foodyham_user', JSON.stringify(updatedUser));
-          
-          resolve(updatedUser);
-        } catch (error) {
-          reject(new Error('Failed to update profile'));
-        }
-      }, 500);
-    });
-  };
-
-  const changePassword = (currentPassword, newPassword) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const users = JSON.parse(localStorage.getItem('foodyham_users') || '[]');
-        const userIndex = users.findIndex(u => u.id === user.id);
-        
-        if (userIndex === -1) {
-          reject(new Error('User not found'));
-          return;
-        }
-        
-        // Check current password
-        if (users[userIndex].password !== currentPassword) {
-          reject(new Error('Current password is incorrect'));
-          return;
-        }
-        
-        // Validate new password
-        if (newPassword.length < 6) {
-          reject(new Error('New password must be at least 6 characters'));
-          return;
-        }
-        
-        // Update password
-        users[userIndex].password = newPassword;
-        localStorage.setItem('foodyham_users', JSON.stringify(users));
-        
-        resolve({ message: 'Password updated successfully' });
-      }, 500);
-    });
-  };
-
+  /* =========================
+     LOGOUT
+  ========================= */
   const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setUser(null);
-    localStorage.removeItem('foodyham_user');
-  };
-
-  const value = {
-    user,
-    login,
-    register,
-    updateProfile,
-    changePassword,
-    logout,
-    loading
   };
 
   return (
-    <AuthContext.Provider value={value}>
-      {children}
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        login,
+        register,
+        logout,
+        clearError: () => setError(""),
+      }}
+    >
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

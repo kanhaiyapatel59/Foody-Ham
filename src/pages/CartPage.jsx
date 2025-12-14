@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { FaTrash, FaPlus, FaMinus, FaShoppingCart, FaCreditCard } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+import { FaTrash, FaPlus, FaMinus, FaShoppingCart, FaCreditCard, FaSpinner } from 'react-icons/fa';
 
 function CartPage() {
   const { 
@@ -12,24 +13,113 @@ function CartPage() {
     getCartTotal 
   } = useCart();
   
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
+    if (!user) {
+      alert('Please login to checkout');
+      navigate('/login', { state: { from: '/cart' } });
+      return;
+    }
+
     if (cartItems.length === 0) {
       alert('Your cart is empty!');
       return;
     }
-    
-    // In a real app, this would redirect to a payment gateway
-    // For demo, we'll just show a success message
-    alert(`Order placed successfully! Total: $${(getCartTotal() + 5 + (getCartTotal() * 0.08)).toFixed(2)}\n\nThank you for your order!`);
-    
-    // Clear cart after checkout
-    clearCart();
-    
-    // Redirect to home page
-    navigate('/');
+
+    try {
+      setLoading(true);
+      setError('');
+
+      // Check if token exists
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Not authenticated. Please login again.');
+      }
+
+      // Prepare order data
+      const orderData = {
+        items: cartItems.map(item => ({
+          product: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image
+        })),
+        totalAmount: getCartTotal() + 5 + (getCartTotal() * 0.08),
+        shippingAddress: user.address || '',
+        paymentMethod: 'credit_card'
+      };
+
+      // Create order using fetch instead of axios
+      const response = await fetch('http://localhost:3000/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setCheckoutSuccess(true);
+        clearCart();
+        
+        // Show success for 5 seconds then redirect
+        setTimeout(() => {
+          setCheckoutSuccess(false);
+          navigate('/');
+        }, 5000);
+      } else {
+        throw new Error(data.message || 'Checkout failed');
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      
+      if (err.message.includes('Not authenticated') || err.message.includes('401')) {
+        // Clear invalid token and redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setError('Session expired. Please login again.');
+        setTimeout(() => {
+          navigate('/login', { state: { from: '/cart' } });
+        }, 2000);
+      } else {
+        setError(err.message || 'Checkout failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (checkoutSuccess) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <div className="max-w-md mx-auto">
+          <div className="text-green-500 text-6xl mb-4">✓</div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">Order Placed Successfully!</h1>
+          <p className="text-gray-600 mb-8">
+            Thank you for your order. You will receive a confirmation email shortly.
+          </p>
+          <p className="text-gray-500 mb-8">
+            Redirecting to homepage in 5 seconds...
+          </p>
+          <Link
+            to="/"
+            className="bg-orange-500 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-orange-600 transition duration-300 inline-block"
+          >
+            Go to Homepage
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -58,8 +148,13 @@ function CartPage() {
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">Shopping Cart</h1>
       
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cart Items */}
         <div className="lg:col-span-2">
           {cartItems.map(item => (
             <div key={`${item.id}-${item.name}`} className="bg-white rounded-lg shadow-md p-6 mb-4">
@@ -79,6 +174,7 @@ function CartPage() {
                       onClick={() => removeFromCart(item.id)}
                       className="text-red-500 hover:text-red-600 ml-2"
                       title="Remove item"
+                      disabled={loading}
                     >
                       <FaTrash />
                     </button>
@@ -88,16 +184,18 @@ function CartPage() {
                     <div className="flex items-center space-x-3">
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200"
+                        className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50"
                         title="Decrease quantity"
+                        disabled={loading || item.quantity <= 1}
                       >
                         <FaMinus />
                       </button>
                       <span className="text-lg font-semibold w-8 text-center">{item.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200"
+                        className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded hover:bg-gray-200 disabled:opacity-50"
                         title="Increase quantity"
+                        disabled={loading}
                       >
                         <FaPlus />
                       </button>
@@ -118,13 +216,13 @@ function CartPage() {
 
           <button
             onClick={clearCart}
-            className="text-red-500 hover:text-red-600 flex items-center gap-2 mt-4"
+            className="text-red-500 hover:text-red-600 flex items-center gap-2 mt-4 disabled:opacity-50"
+            disabled={loading}
           >
             <FaTrash /> Clear Cart
           </button>
         </div>
 
-        {/* Order Summary */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Order Summary</h2>
@@ -154,14 +252,23 @@ function CartPage() {
 
             <button 
               onClick={handleCheckout}
-              className="w-full bg-orange-500 text-white py-3 rounded-lg text-lg font-semibold hover:bg-orange-600 transition duration-300 mb-4 flex items-center justify-center gap-2"
+              disabled={loading || !user}
+              className="w-full bg-orange-500 text-white py-3 rounded-lg text-lg font-semibold hover:bg-orange-600 transition duration-300 mb-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <FaCreditCard /> Proceed to Checkout
+              {loading ? (
+                <>
+                  <FaSpinner className="animate-spin" /> Processing...
+                </>
+              ) : (
+                <>
+                  <FaCreditCard /> {!user ? 'Login to Checkout' : 'Proceed to Checkout'}
+                </>
+              )}
             </button>
 
             <Link
               to="/menu"
-              className="w-full text-center block bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition duration-300"
+              className="w-full text-center block bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition duration-300 disabled:opacity-50"
             >
               Continue Shopping
             </Link>

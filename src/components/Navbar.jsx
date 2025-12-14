@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaShoppingCart, FaUser, FaPlus, FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
+import { FaShoppingCart, FaUser, FaPlus, FaSignOutAlt, FaBars, FaTimes, FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext'; // Add this import
+import { useCart } from '../context/CartContext';
 
 function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const { getCartCount } = useCart(); // Add this
+  const { user, logout, loading: authLoading } = useAuth();
+  const { getCartCount, loading: cartLoading } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -20,7 +20,12 @@ function Navbar() {
     logout();
     navigate('/');
     setShowDropdown(false);
+    setIsMenuOpen(false);
   };
+
+  // Get cart count or show loading
+  const cartCount = getCartCount();
+  const showCartBadge = cartCount > 0;
 
   return (
     <nav className="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
@@ -58,20 +63,29 @@ function Navbar() {
             {/* Cart Icon */}
             <Link to="/cart" className="relative">
               <FaShoppingCart className="text-xl text-gray-600 hover:text-orange-500 cursor-pointer transition duration-300" />
-              {/* Cart badge - Show actual count */}
-              {getCartCount() > 0 && (
-                <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {getCartCount()}
+              {/* Cart badge - Show actual count or loading */}
+              {cartLoading ? (
+                <span className="absolute -top-2 -right-2 bg-gray-300 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  <FaSpinner className="animate-spin" size={10} />
                 </span>
-              )}
+              ) : showCartBadge ? (
+                <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              ) : null}
             </Link>
 
             {/* User Dropdown */}
-            {user ? (
+            {authLoading ? (
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                <FaSpinner className="animate-spin text-gray-400" size={16} />
+              </div>
+            ) : user ? (
               <div className="relative">
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
                   className="flex items-center space-x-2 text-gray-600 hover:text-orange-500"
+                  disabled={authLoading}
                 >
                   <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                     <FaUser className="text-orange-500" />
@@ -97,7 +111,7 @@ function Navbar() {
                       <Link
                         to="/admin/products"
                         className="block px-4 py-2 hover:bg-gray-100"
-                        onClick={() => setShowDropdown(false)}
+                        onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
                       >
                         Manage Products
                       </Link>
@@ -105,7 +119,7 @@ function Navbar() {
                     <Link
                       to="/profile"
                       className="block px-4 py-2 hover:bg-gray-100"
-                      onClick={() => setShowDropdown(false)}
+                      onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
                     >
                       My Profile
                     </Link>
@@ -131,6 +145,7 @@ function Navbar() {
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden text-gray-600 hover:text-orange-500"
+              disabled={authLoading}
             >
               {isMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
             </button>
@@ -159,12 +174,18 @@ function Navbar() {
                 Contact
               </Link>
               <Link to="/cart" className={`${isActive('/cart')} py-2 flex items-center`} onClick={() => setIsMenuOpen(false)}>
-                Cart {getCartCount() > 0 && `(${getCartCount()})`}
+                Cart {!cartLoading && cartCount > 0 && `(${cartCount})`}
+                {cartLoading && <FaSpinner className="animate-spin ml-2" size={14} />}
               </Link>
-              {!user && (
+              {!user && !authLoading && (
                 <Link to="/login" className="text-orange-500 py-2" onClick={() => setIsMenuOpen(false)}>
                   Login
                 </Link>
+              )}
+              {authLoading && (
+                <div className="py-2 text-gray-500 flex items-center">
+                  <FaSpinner className="animate-spin mr-2" /> Loading...
+                </div>
               )}
             </div>
           </div>

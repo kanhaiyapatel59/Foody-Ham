@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaUser, FaLock, FaEnvelope } from 'react-icons/fa';
+import { FaUser, FaLock, FaEnvelope, FaExclamationTriangle, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
 
 function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -11,13 +11,15 @@ function LoginPage() {
     password: '',
     confirmPassword: ''
   });
-  const [error, setError] = useState('');
+  const [localError, setLocalError] = useState(''); // Local error for validation
   const [loading, setLoading] = useState(false);
 
-  const { login, register } = useAuth();
+  // Get authentication functions and error state from context
+  const { login, register, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Determine where to navigate after successful authentication
   const from = location.state?.from?.pathname || '/';
 
   const handleChange = (e) => {
@@ -25,20 +27,31 @@ function LoginPage() {
       ...formData,
       [e.target.name]: e.target.value
     });
-    setError('');
+    setLocalError('');
+    clearError(); // Clear auth context error when user starts typing
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setLocalError('');
+    clearError();
     setLoading(true);
 
     try {
       if (isLogin) {
+        // --- LOGIN LOGIC ---
+        if (!formData.email || !formData.password) {
+            throw new Error('Email and password are required.');
+        }
         await login(formData.email, formData.password);
         navigate(from, { replace: true });
+
       } else {
-        // Registration validation
+        // --- REGISTRATION LOGIC ---
+        // Client-side validation
+        if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+            throw new Error('All fields are required for registration.');
+        }
         if (formData.password !== formData.confirmPassword) {
           throw new Error('Passwords do not match');
         }
@@ -50,34 +63,40 @@ function LoginPage() {
         navigate(from, { replace: true });
       }
     } catch (err) {
-      setError(err.message || 'Something went wrong');
+      // Catch errors thrown by validation or by the context functions (API errors)
+      setLocalError(err.message || 'Something went wrong during authentication.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Combine local errors with auth context errors for display
+  const displayError = localError || authError;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-lg">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-2xl border border-gray-100">
         <div>
-          <h2 className="text-3xl font-bold text-center text-gray-800">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
+          <h2 className="text-3xl font-extrabold text-center text-orange-600 flex items-center justify-center gap-2">
+            {isLogin ? <FaSignInAlt /> : <FaUserPlus />}
+            {isLogin ? 'Welcome Back' : 'Join Foody-Ham'}
           </h2>
-          <p className="mt-2 text-center text-gray-600">
-            {isLogin ? 'Sign in to your account' : 'Sign up for a new account'}
+          <p className="mt-2 text-center text-gray-500">
+            {isLogin ? 'Sign in to place your order' : 'Create an account to get started'}
           </p>
         </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {error}
+        {displayError && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 flex items-center gap-3 rounded">
+            <FaExclamationTriangle className="text-xl flex-shrink-0" />
+            <span className="font-medium">{displayError}</span>
           </div>
         )}
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           {!isLogin && (
             <div>
-              <label className="block text-gray-700 mb-2">Full Name</label>
+              <label className="block text-gray-700 mb-2 font-medium">Full Name</label>
               <div className="relative">
                 <FaUser className="absolute left-3 top-3 text-gray-400" />
                 <input
@@ -85,15 +104,17 @@ function LoginPage() {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full pl-10 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  required
+                  className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition"
+                  required={!isLogin}
+                  disabled={loading}
+                  placeholder="Your Name"
                 />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-gray-700 mb-2">Email Address</label>
+            <label className="block text-gray-700 mb-2 font-medium">Email Address</label>
             <div className="relative">
               <FaEnvelope className="absolute left-3 top-3 text-gray-400" />
               <input
@@ -101,14 +122,16 @@ function LoginPage() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full pl-10 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition"
                 required
+                disabled={loading}
+                placeholder="example@email.com"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-gray-700 mb-2">Password</label>
+            <label className="block text-gray-700 mb-2 font-medium">Password</label>
             <div className="relative">
               <FaLock className="absolute left-3 top-3 text-gray-400" />
               <input
@@ -116,15 +139,17 @@ function LoginPage() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full pl-10 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition"
                 required
+                disabled={loading}
+                placeholder="Password (min 6 characters)"
               />
             </div>
           </div>
 
           {!isLogin && (
             <div>
-              <label className="block text-gray-700 mb-2">Confirm Password</label>
+              <label className="block text-gray-700 mb-2 font-medium">Confirm Password</label>
               <div className="relative">
                 <FaLock className="absolute left-3 top-3 text-gray-400" />
                 <input
@@ -132,8 +157,10 @@ function LoginPage() {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full pl-10 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  required
+                  className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition"
+                  required={!isLogin}
+                  disabled={loading}
+                  placeholder="Confirm Password"
                 />
               </div>
             </div>
@@ -143,18 +170,20 @@ function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-orange-500 text-white py-3 rounded hover:bg-orange-600 transition duration-300 font-semibold disabled:opacity-50"
+              className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition duration-300 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
             >
-              {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Sign Up')}
+              {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
             </button>
           </div>
         </form>
 
-        <div className="text-center">
+        <div className="text-center pt-4 border-t border-gray-100">
           <button
             onClick={() => {
+              // Toggle state and reset form/errors
               setIsLogin(!isLogin);
-              setError('');
+              setLocalError('');
+              clearError();
               setFormData({
                 name: '',
                 email: '',
@@ -162,29 +191,22 @@ function LoginPage() {
                 confirmPassword: ''
               });
             }}
-            className="text-orange-500 hover:text-orange-600"
+            className="text-orange-500 font-medium hover:text-orange-600 transition"
+            disabled={loading}
           >
             {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
           </button>
         </div>
 
-        <div className="text-center text-sm text-gray-500 mt-6 pt-6 border-t">
-          {/* <p className="font-semibold mb-2">Demo Credentials:</p> */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* <div className="text-left">
-              <p className="font-medium">Admin Account:</p>
-              <p>Email: admin@foodyham.com</p>
-              <p>Password: admin123</p>
-            </div> */}
-            {/* <div className="text-left">
-              <p className="font-medium">Demo Users:</p>
-              <p>Email: john@example.com</p>
-              <p>Password: password123</p>
-              <p>Email: jane@example.com</p>
-              <p>Password: password123</p>
-            </div> */}
+        <div className="text-center text-sm text-gray-500 mt-6 pt-6 border-t border-gray-200">
+          <div className="grid grid-cols-1 gap-3 bg-gray-50 p-4 rounded-lg">
+            <div className="text-left">
+              <p className="font-semibold mb-1 text-gray-700">Demo Admin Account:</p>
+              <p>Email: <code className="bg-gray-200 px-1 rounded">admin@foodyham.com</code></p>
+              <p>Password: <code className="bg-gray-200 px-1 rounded">admin123</code></p>
+            </div>
           </div>
-          {/* <p className="mt-4">Or create your own account!</p> */}
+          <p className="mt-4 text-gray-600">You can also create a regular customer account above.</p>
         </div>
       </div>
     </div>

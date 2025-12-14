@@ -1,76 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
-// Default food items
-const defaultFoodItems = {
-  1: {
-    name: "Classic Cheeseburger",
-    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop",
-    description: "Our signature burger features a juicy 1/3 lb beef patty with melted cheddar cheese.",
-    fullDescription: "This burger is made from 100% Angus beef, seasoned with our special blend of herbs and spices. Topped with fresh lettuce, ripe tomatoes, crispy onions, pickles, and our special secret sauce. Served in a toasted brioche bun with a side of golden fries.",
-    price: 11.99,
-    ingredients: [
-      "Angus beef patty",
-      "Cheddar cheese",
-      "Brioche bun",
-      "Lettuce",
-      "Tomato",
-      "Onion",
-      "Pickles",
-      "Special sauce"
-    ],
-    nutritionalInfo: {
-      calories: 750,
-      protein: "38g",
-      carbs: "48g",
-      fat: "35g"
-    }
+// Create axios instance
+const api = axios.create({
+  baseURL: 'http://localhost:3000/api',
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
   },
-  2: {
-    name: "Margherita Pizza",
-    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&auto=format&fit=crop",
-    description: "Classic pizza with fresh mozzarella, basil and San Marzano tomato sauce.",
-    fullDescription: "Our pizza dough is made fresh daily and left to rise for 24 hours. We use San Marzano tomatoes for our sauce and fresh buffalo mozzarella. Baked in our stone oven for that perfect crisp crust with a slightly charred edge.",
-    price: 14.99,
-    ingredients: [
-      "Hand-tossed dough",
-      "San Marzano tomato sauce",
-      "Fresh mozzarella",
-      "Fresh basil",
-      "Extra virgin olive oil",
-      "Sea salt"
-    ],
-    nutritionalInfo: {
-      calories: 820,
-      protein: "36g",
-      carbs: "92g",
-      fat: "32g"
+});
+
+// Add token to requests if available
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
   },
-  3: {
-    name: "Caesar Salad",
-    image: "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&auto=format&fit=crop",
-    description: "Crisp romaine lettuce with Caesar dressing, croutons and parmesan.",
-    fullDescription: "Fresh romaine lettuce tossed in our house-made Caesar dressing with garlic croutons, shaved parmesan cheese, and a sprinkle of black pepper. Optional grilled chicken or shrimp add protein to this classic salad.",
-    price: 9.99,
-    ingredients: [
-      "Romaine lettuce",
-      "House-made Caesar dressing",
-      "Garlic croutons",
-      "Parmesan cheese",
-      "Black pepper",
-      "Optional: grilled chicken"
-    ],
-    nutritionalInfo: {
-      calories: 320,
-      protein: "12g",
-      carbs: "18g",
-      fat: "22g"
-    }
+  (error) => {
+    return Promise.reject(error);
   }
-};
+);
 
 function ProductDetailPage() {
   const { id } = useParams();
@@ -79,26 +34,110 @@ function ProductDetailPage() {
   const { addToCart } = useCart();
   const { user } = useAuth();
   
-  let food;
-  
-  // Check if it's a custom product
-  if (id && id.startsWith('custom-')) {
-    const customId = id.replace('custom-', '');
-    const customProducts = JSON.parse(localStorage.getItem('customProducts') || '[]');
-    food = customProducts.find(p => p.id.toString() === customId);
-  } else {
-    food = defaultFoodItems[id];
-  }
-  
-  // Check for product passed via state
-  if (!food && location.state?.product) {
-    food = location.state.product;
+  const [food, setFood] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchProduct();
+  }, [id]);
+
+  const fetchProduct = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      // If product is passed via state (from menu click), use it
+      if (location.state?.product) {
+        setFood(location.state.product);
+        setLoading(false);
+        return;
+      }
+
+      // Otherwise fetch from API
+      const response = await api.get(`/products/${id}`);
+      
+      if (response.data.success) {
+        const productData = response.data.data;
+        
+        // Transform data to match expected format
+        const formattedProduct = {
+          id: productData._id || productData.id,
+          name: productData.name,
+          image: productData.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop',
+          description: productData.description,
+          fullDescription: productData.fullDescription || productData.description,
+          price: productData.price,
+          ingredients: productData.ingredients || ['Fresh ingredients'],
+          nutritionalInfo: productData.nutritionalInfo || {
+            calories: 0,
+            protein: "0g",
+            carbs: "0g",
+            fat: "0g"
+          },
+          category: productData.category
+        };
+
+        setFood(formattedProduct);
+      } else {
+        setError('Product not found');
+      }
+    } catch (err) {
+      console.error('Error fetching product:', err);
+      
+      // Fallback: Check for custom product in localStorage
+      if (id && id.startsWith('custom-')) {
+        const customId = id.replace('custom-', '');
+        const customProducts = JSON.parse(localStorage.getItem('customProducts') || '[]');
+        const customProduct = customProducts.find(p => p.id.toString() === customId);
+        
+        if (customProduct) {
+          setFood(customProduct);
+        } else {
+          setError('Product not found');
+        }
+      } else {
+        setError(err.response?.data?.message || 'Failed to load product');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToCart = () => {
+    if (!user) {
+      alert('Please login to add items to cart');
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    
+    const cartProduct = {
+      id: food.id,
+      name: food.name,
+      image: food.image,
+      description: food.description,
+      price: typeof food.price === 'string' ? parseFloat(food.price) : food.price
+    };
+    
+    addToCart(cartProduct, 1);
+    alert(`${food.name} has been added to your cart!`);
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg text-gray-600">Loading product details...</div>
+        </div>
+      </div>
+    );
   }
 
-  if (!food) {
+  if (error || !food) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <h1 className="text-3xl font-bold text-gray-800 mb-4">Product not found</h1>
+        <p className="text-gray-600 mb-6">{error || 'The product you are looking for does not exist.'}</p>
         <button 
           onClick={() => navigate('/menu')}
           className="bg-orange-500 text-white px-6 py-2 rounded hover:bg-orange-600 transition"
@@ -108,28 +147,6 @@ function ProductDetailPage() {
       </div>
     );
   }
-
-  const handleAddToCart = () => {
-    if (!user) {
-      alert('Please login to add items to cart');
-      navigate('/login', { state: { from: location } });
-      return;
-    }
-    
-    // Fix the ID for custom products
-    const productId = id.startsWith('custom-') ? id : parseInt(id);
-    
-    const cartProduct = {
-      id: productId,
-      name: food.name,
-      image: food.image,
-      description: food.description,
-      price: parseFloat(food.price) // Ensure it's a number
-    };
-    
-    addToCart(cartProduct, 1);
-    alert(`${food.name} has been added to your cart!`);
-  };
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -196,7 +213,9 @@ function ProductDetailPage() {
 
           <div className="flex items-center justify-between border-t pt-8">
             <div>
-              <div className="text-3xl font-bold text-orange-500">${food.price}</div>
+              <div className="text-3xl font-bold text-orange-500">
+                ${typeof food.price === 'number' ? food.price.toFixed(2) : parseFloat(food.price).toFixed(2)}
+              </div>
               <div className="text-gray-500">Price includes tax</div>
             </div>
             <button 
