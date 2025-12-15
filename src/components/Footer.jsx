@@ -35,19 +35,17 @@ function Footer() {
               </div>
               <div className="flex items-center space-x-2">
                 <FaPhone className="text-orange-400" />
-                <span className="text-gray-300">+1-123-456-7890</span>
+                <span className="text-gray-300">+91 9153890946</span>
               </div>
             </div>
           </div>
-
-          {/* Social Media */}
           <div>
             <h4 className="text-lg font-semibold mb-4">Follow Us</h4>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-blue-400 transition">
+              <a href="https://www.facebook.com/profile.php?id=100040335400748" className="text-gray-300 hover:text-blue-400 transition">
                 <FaFacebook size={24} />
               </a>
-              <a href="#" className="text-gray-300 hover:text-blue-400 transition">
+              <a href="" className="text-gray-300 hover:text-blue-400 transition">
                 <FaTwitter size={24} />
               </a>
               <a href="#" className="text-gray-300 hover:text-pink-400 transition">
@@ -56,8 +54,6 @@ function Footer() {
             </div>
           </div>
         </div>
-
-        {/* Copyright */}
         <div className="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
           <p>&copy; 2025 Foody-Ham. All rights reserved.</p>
         </div>
