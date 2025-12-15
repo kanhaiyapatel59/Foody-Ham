@@ -19,8 +19,6 @@ import {
   FaClock,
   FaStar
 } from 'react-icons/fa';
-
-// Create axios instance
 const api = axios.create({
   baseURL: 'http://localhost:3000/api',
   withCredentials: true,
@@ -28,8 +26,6 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
-// Add token to requests if available
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');

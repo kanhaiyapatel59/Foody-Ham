@@ -60,8 +60,6 @@ function App() {
                   <AdminProductsPage />
                 </ProtectedRoute>
               } />
-              
-              {/* FIX APPLIED HERE: Using existing ProtectedRoute component */}
               <Route 
                 path="/admin/feedback" 
                 element={
@@ -70,7 +68,6 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              
             </Route>
           </Routes>
         </CartProvider>
