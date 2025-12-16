@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../context/AuthContext';
@@ -18,6 +18,7 @@ function FoodCard({
 }) {
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const navigate = useNavigate(); 
   
   const [isFeatured, setIsFeatured] = useState(initialIsFeatured || false);
   const [loadingFeature, setLoadingFeature] = useState(false);
@@ -74,8 +75,18 @@ function FoodCard({
       setLoadingFeature(false);
     }
   };
+  
+  const handleViewDetails = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/product/${id}`);
+  }
 
   return (
+    // --------------------------------------------------------------------------------------------------
+    // 🛑 FIX START: Replaced the entire wrapping <Link> with a <div>.
+    // The link functionality is now provided ONLY by the parent <Link> in MenuPage.jsx.
+    // --------------------------------------------------------------------------------------------------
     <div 
       className={`
         group relative h-full flex flex-col rounded-2xl overflow-hidden 
@@ -87,13 +98,12 @@ function FoodCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* NEW STRUCTURE: 
-        Wrap the entire card content in a single Link. 
-        This is the clearest way to make the card clickable.
+      
+      {/* 🛑 CONTENT WRAPPER: This was the redundant Link that caused the error. Now it's a simple <div>.
+          The classes needed for styling are kept.
       */}
-      <Link 
-        to={`/product/${id}`} 
-        className="block h-full flex flex-col" // Use flex to maintain full height structure
+      <div 
+        className="block h-full flex flex-col" // Keeping the original styling classes
       >
 
         {/* Featured Badge - Top Left */}
@@ -137,7 +147,7 @@ function FoodCard({
           </button>
         )}
 
-        {/* Image Container (Now inside the main Link) */}
+        {/* Image Container */}
         <div className="relative h-56 md:h-64 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
           {/* Loading Skeleton */}
           {!imageLoaded && (
@@ -156,7 +166,6 @@ function FoodCard({
           {/* Hover Overlay with Quick Actions */}
           <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end justify-center pb-8 transition-all duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
             <div className="flex gap-3">
-              {/* Quick Add to Cart - Must be a <button> and stop propagation */}
               <button
                 onClick={handleAddToCart}
                 className="bg-white text-gray-800 p-3.5 rounded-full hover:bg-green-500 hover:text-white transition-all duration-300 transform hover:scale-110 shadow-lg"
@@ -164,17 +173,12 @@ function FoodCard({
               >
                 <FaShoppingCart className="w-5 h-5" />
               </button>
-              
-              {/* Quick View Details - Now redundant, but if kept, must be a <button> and use navigate() 
-                  Instead, we remove it since the whole card links to details. 
-              */}
             </div>
           </div>
         </div>
 
-        {/* Content Section - The link is inherited from the parent <Link> */}
+        {/* Content Section */}
         <div className="flex-1 flex flex-col p-5">
-          {/* Product Name - Now just a heading, link is inherited from above */}
           <h3 className="font-bold text-gray-900 text-xl mb-3 group-hover:text-orange-600 transition-colors duration-300 line-clamp-1 tracking-tight">
             {name}
           </h3>
@@ -204,32 +208,22 @@ function FoodCard({
               </div>
             </div>
           )}
-          
-          {/* Action Buttons - These buttons are NOT inside the main <Link> wrapper, which is incorrect.
-             To fix this, we need to close the main <Link> after the content and put the buttons outside.
-             
-             Wait, if the entire card content is wrapped, the footer buttons must be fixed to be outside
-             or use buttons with `e.stopPropagation()` and `e.preventDefault()`. 
-             
-             Let's put the main link around the visual/info part, and keep the action buttons separate 
-             in the footer for better structure.
-             
-             --- REVERTING TO ORIGINAL INTENT: Separate Clickable Regions ---
-          */}
         </div>
-      </Link>
+      </div> 
+      {/* 🛑 CONTENT WRAPPER closes here (It is now a div, not a Link) */}
       
-      {/* FINAL Action Buttons - Put outside the main Link for clarity on separate click actions */}
+      {/* FINAL Action Buttons - These buttons are correctly placed outside the wrapper. */}
       <div className="p-5 pt-0 flex gap-3 mt-auto"> 
-        <Link 
-          to={`/product/${id}`}
+        
+        <button
+          onClick={handleViewDetails} 
           className="flex-1 bg-gradient-to-r from-gray-400 to-gray-800 text-white px-4 py-3.5 rounded-xl hover:from-gray-900 hover:to-black transition-all duration-300 font-medium text-center group/view shadow-md"
         >
           <span className="flex items-center justify-center gap-2.5">
             <FaEye className="w-4.5 h-4.5" />
             View Details
           </span>
-        </Link>
+        </button>
         
         <button
           onClick={handleAddToCart}
