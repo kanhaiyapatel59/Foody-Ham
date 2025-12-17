@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-// 🚨 NEW: Imported FaCommentDots icon
-import { FaShoppingCart, FaUser, FaPlus, FaSignOutAlt, FaBars, FaTimes, FaSpinner, FaHome, FaUtensils, FaInfoCircle, FaEnvelope, FaCrown, FaCommentDots } from 'react-icons/fa';
+// Removed FaCommentDots from import
+import { FaShoppingCart, FaUser, FaPlus, FaSignOutAlt, FaBars, FaTimes, FaSpinner, FaHome, FaUtensils, FaInfoCircle, FaEnvelope, FaCrown, FaHeart } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
 function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
+  // Ensure useAuth has been imported correctly (it is)
   const { user, logout, loading: authLoading } = useAuth();
   const { getCartCount, loading: cartLoading } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -105,7 +106,8 @@ function Navbar() {
               <span className="font-medium">About</span>
             </Link>
             
-            {/* 🚨 NEW: Desktop Feedback Link */}
+            {/* REMOVED: Desktop Feedback Link */}
+            {/* Removed the following block:
             <Link 
               to="/feedback" 
               className={`flex items-center gap-2 px-5 py-3 rounded-xl transition-all duration-300 ${isActive('/feedback')}`}
@@ -113,6 +115,7 @@ function Navbar() {
               <FaCommentDots className="text-lg" />
               <span className="font-medium">Feedback</span>
             </Link>
+            */}
 
             <Link 
               to="/contact" 
@@ -125,6 +128,15 @@ function Navbar() {
 
           {/* User Actions with Enhanced Design */}
           <div className="flex items-center space-x-4 lg:space-x-6">
+            {/* Wishlist Icon */}
+            <Link to="/wishlist" className="relative group">
+              <div className="p-2.5 bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 border border-gray-100">
+                <FaHeart className={`text-xl transition-colors duration-300 ${
+                  location.pathname === '/wishlist' ? 'text-red-500' : 'text-gray-600 group-hover:text-red-500'
+                }`} />
+              </div>
+            </Link>
+
             {/* Cart Icon with Enhanced Badge */}
             <Link to="/cart" className="relative group">
               <div className="p-2.5 bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 border border-gray-100">
@@ -215,16 +227,51 @@ function Navbar() {
                       {/* Menu Items */}
                       <div className="py-2">
                         {user.isAdmin && (
-                          <Link
-                            to="/admin/products"
-                            className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50/50 transition-colors duration-200 group"
-                            onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
-                          >
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex items-center justify-center group-hover:from-blue-100 group-hover:to-blue-200">
-                              <FaPlus className="text-blue-500" />
-                            </div>
-                            <span className="font-medium text-gray-700">Manage Products</span>
-                          </Link>
+                          <>
+                            <Link
+                              to="/admin/products"
+                              className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50/50 transition-colors duration-200 group"
+                              onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
+                            >
+                              <div className="w-8 h-8 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex items-center justify-center group-hover:from-blue-100 group-hover:to-blue-200">
+                                <FaPlus className="text-blue-500" />
+                              </div>
+                              <span className="font-medium text-gray-700">Manage Products</span>
+                            </Link>
+                            
+                            <Link
+                              to="/admin/analytics"
+                              className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50/50 transition-colors duration-200 group"
+                              onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
+                            >
+                              <div className="w-8 h-8 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg flex items-center justify-center group-hover:from-purple-100 group-hover:to-purple-200">
+                                <span className="text-purple-500 text-sm font-bold">📊</span>
+                              </div>
+                              <span className="font-medium text-gray-700">Analytics</span>
+                            </Link>
+                            
+                            <Link
+                              to="/admin/coupons"
+                              className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50/50 transition-colors duration-200 group"
+                              onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
+                            >
+                              <div className="w-8 h-8 bg-gradient-to-br from-green-50 to-green-100 rounded-lg flex items-center justify-center group-hover:from-green-100 group-hover:to-green-200">
+                                <span className="text-green-500 text-sm font-bold">🎫</span>
+                              </div>
+                              <span className="font-medium text-gray-700">Coupons</span>
+                            </Link>
+                            
+                            <Link
+                              to="/admin/orders"
+                              className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50/50 transition-colors duration-200 group"
+                              onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
+                            >
+                              <div className="w-8 h-8 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg flex items-center justify-center group-hover:from-indigo-100 group-hover:to-indigo-200">
+                                <span className="text-indigo-500 text-sm font-bold">📦</span>
+                              </div>
+                              <span className="font-medium text-gray-700">Orders</span>
+                            </Link>
+                          </>
                         )}
                         
                         <Link
@@ -236,6 +283,17 @@ function Navbar() {
                             <FaUser className="text-green-500" />
                           </div>
                           <span className="font-medium text-gray-700">My Profile</span>
+                        </Link>
+                        
+                        <Link
+                          to="/orders"
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50/50 transition-colors duration-200 group"
+                          onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
+                        >
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex items-center justify-center group-hover:from-blue-100 group-hover:to-blue-200">
+                            <span className="text-blue-500 text-sm font-bold">📋</span>
+                          </div>
+                          <span className="font-medium text-gray-700">My Orders</span>
                         </Link>
                         
                         <button
@@ -318,7 +376,8 @@ function Navbar() {
                 <span className="font-medium">About</span>
               </Link>
               
-              {/* 🚨 NEW: Mobile Feedback Link */}
+              {/* REMOVED: Mobile Feedback Link */}
+              {/* Removed the following block:
               <Link 
                 to="/feedback" 
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 ${isActive('/feedback')}`}
@@ -327,6 +386,7 @@ function Navbar() {
                 <FaCommentDots className="text-lg" />
                 <span className="font-medium">Feedback</span>
               </Link>
+              */}
 
               <Link 
                 to="/contact" 
@@ -335,6 +395,15 @@ function Navbar() {
               >
                 <FaEnvelope className="text-lg" />
                 <span className="font-medium">Contact</span>
+              </Link>
+              
+              <Link 
+                to="/wishlist" 
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 ${isActive('/wishlist')}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <FaHeart className="text-lg" />
+                <span className="font-medium">Wishlist</span>
               </Link>
               
               <Link 

@@ -1,8 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import { CartProvider } from './context/CartContext';
+import { CartProvider } from "./context/CartContext";
+import { WishlistProvider } from './context/WishlistContext';
+import { RecentlyViewedProvider } from './context/RecentlyViewedContext'; 
 import Layout from './components/Layout';
+import ErrorBoundary from './components/ErrorBoundary';
 import HomePage from './pages/HomePage';
 import MenuPage from './pages/MenuPage';
 import AboutPage from './pages/AboutPage';
@@ -13,15 +16,25 @@ import LoginPage from './pages/LoginPage';
 import CartPage from './pages/CartPage';
 import AdminProductsPage from './pages/AdminProductsPage';
 import ProfilePage from './pages/ProfilePage'; 
-import ProtectedRoute from './components/ProtectedRoute'; // <-- ProtectedRoute is used here!
+import ProtectedRoute from './components/ProtectedRoute';
 import FeedbackPage from './pages/FeedbackPage';
 import AdminFeedbackPage from './pages/AdminFeedbackPage';
+import PaymentPage from './pages/PaymentPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import WishlistPage from './pages/WishlistPage';
+import AdminAnalyticsPage from './pages/AdminAnalyticsPage';
+import AdminCouponsPage from './pages/AdminCouponsPage';
+import OrderHistoryPage from './pages/OrderHistoryPage';
+import AdminOrdersPage from './pages/AdminOrdersPage';
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <CartProvider>
+    <ErrorBoundary>
+      <Router>
+        <AuthProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <RecentlyViewedProvider>
           <Routes>
             {/* Public routes without layout */}
             <Route path="/login" element={<LoginPage />} />
@@ -34,12 +47,36 @@ function App() {
               <Route path="contact" element={<ContactPage />} />
               <Route path="product/:id" element={<ProductDetailPage />} />
               <Route path="product/custom-:id" element={<ProductDetailPage />} />
-              <Route path="feedback" element={<FeedbackPage />} />
               
-              {/* Protected routes */}
+              {/* Protected Feedback Page */}
+              <Route path="feedback" element={
+                <ProtectedRoute>
+                  <FeedbackPage />
+                </ProtectedRoute>
+              } />
+              
+              {/* Existing Protected routes */}
               <Route path="cart" element={
                 <ProtectedRoute>
                   <CartPage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="wishlist" element={
+                <ProtectedRoute>
+                  <WishlistPage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="payment" element={
+                <ProtectedRoute>
+                  <PaymentPage />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="payment-success" element={
+                <ProtectedRoute>
+                  <PaymentSuccessPage />
                 </ProtectedRoute>
               } />
               
@@ -68,11 +105,50 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              
+              <Route 
+                path="/admin/analytics" 
+                element={
+                  <ProtectedRoute requireAdmin> 
+                    <AdminAnalyticsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/admin/coupons" 
+                element={
+                  <ProtectedRoute requireAdmin> 
+                    <AdminCouponsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/orders" 
+                element={
+                  <ProtectedRoute> 
+                    <OrderHistoryPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/admin/orders" 
+                element={
+                  <ProtectedRoute requireAdmin> 
+                    <AdminOrdersPage />
+                  </ProtectedRoute>
+                } 
+              />
             </Route>
           </Routes>
-        </CartProvider>
-      </AuthProvider>
-    </Router>
+              </RecentlyViewedProvider>
+            </WishlistProvider>
+          </CartProvider>
+        </AuthProvider>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

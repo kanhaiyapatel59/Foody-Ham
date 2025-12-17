@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -48,6 +48,10 @@ function MenuPage() {
   const navigate = useNavigate();
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [debouncedCategory, setDebouncedCategory] = useState('all');
+  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [ingredientFilter, setIngredientFilter] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Background Slider Effect
   useEffect(() => {
@@ -75,7 +79,7 @@ function MenuPage() {
 
 
   // Data Fetching Logic
-  const fetchProducts = useCallback(async (category, search) => {
+  const fetchProducts = useCallback(async (category, search, filters = {}) => {
     try {
       setLoading(true);
       setError('');
@@ -86,6 +90,18 @@ function MenuPage() {
       }
       if (search) {
           params.append('search', search);
+      }
+      if (filters.minPrice) {
+          params.append('minPrice', filters.minPrice);
+      }
+      if (filters.maxPrice) {
+          params.append('maxPrice', filters.maxPrice);
+      }
+      if (filters.ingredients) {
+          params.append('ingredients', filters.ingredients);
+      }
+      if (filters.sortBy) {
+          params.append('sortBy', filters.sortBy);
       }
 
       const response = await api.get(`/products?${params.toString()}`);
@@ -98,6 +114,7 @@ function MenuPage() {
           description: product.description,
           price: product.price,
           category: product.category,
+          ingredients: product.ingredients || [],
           ...(product._id && { _id: product._id })
         }));
 
@@ -119,8 +136,14 @@ function MenuPage() {
 
   // Trigger data fetch whenever debounced states change
   useEffect(() => {
-    fetchProducts(debouncedCategory, debouncedSearch);
-  }, [fetchProducts, debouncedCategory, debouncedSearch]);
+    const filters = {
+      minPrice: priceRange.min,
+      maxPrice: priceRange.max,
+      ingredients: ingredientFilter,
+      sortBy: sortBy
+    };
+    fetchProducts(debouncedCategory, debouncedSearch, filters);
+  }, [fetchProducts, debouncedCategory, debouncedSearch, priceRange, ingredientFilter, sortBy]);
 
 
   // 🚨 REMOVED: handleProductClick function is no longer needed
@@ -169,10 +192,11 @@ function MenuPage() {
           <div className="w-24 h-1 bg-gradient-to-r from-red-500 to-orange-500 mx-auto rounded-full mb-8"></div>
         </div>
 
-        {/* Search and Filter Section - Attractive Dark Theme */}
-        <div className="max-w-4xl mx-auto mb-12">
+        {/* Advanced Search and Filter Section */}
+        <div className="max-w-6xl mx-auto mb-12">
           <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-2xl border border-gray-700 shadow-xl">
-            <div className="flex flex-col md:flex-row gap-4">
+            {/* Main Search Row */}
+            <div className="flex flex-col lg:flex-row gap-4 mb-4">
               {/* Search Input */}
               <div className="flex-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -182,7 +206,7 @@ function MenuPage() {
                 </div>
                 <input
                     type="text"
-                    placeholder="Search dishes by name or ingredients..."
+                    placeholder="Search dishes by name, description, or ingredients..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 p-4 bg-gray-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
@@ -190,32 +214,118 @@ function MenuPage() {
               </div>
 
               {/* Category Filter */}
-              <div className="relative md:w-64">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
+              <div className="relative lg:w-48">
                 <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full pl-10 p-4 bg-gray-700 border border-gray-600 rounded-xl text-white appearance-none focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+                    className="w-full p-4 bg-gray-700 border border-gray-600 rounded-xl text-white appearance-none focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
                 >
-                    <option value="all" className="bg-gray-700 text-white">All Categories</option>
-                    {CATEGORIES.filter(cat => cat !== 'all').map(cat => (
-                        <option key={cat} value={cat} className="bg-gray-700 text-white">
-                            {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                        </option>
-                    ))}
+                    <option value="all">All Categories</option>
+                    <option value="burgers">Burgers</option>
+                    <option value="pizza">Pizza</option>
+                    <option value="pasta">Pasta</option>
+                    <option value="salads">Salads</option>
+                    <option value="desserts">Desserts</option>
+                    <option value="chicken">Chicken</option>
+                    <option value="steaks">Steaks</option>
+                    <option value="sandwiches">Sandwiches</option>
+                    <option value="soups">Soups</option>
+                    <option value="breakfast">Breakfast</option>
+                    <option value="healthy">Healthy</option>
                 </select>
               </div>
 
-              {/* Results Count Badge */}
-              <div className="flex items-center justify-center md:justify-start">
-                <span className="px-4 py-3 bg-gradient-to-r from-red-600 to-orange-500 text-white rounded-xl font-semibold shadow-md">
-                  {menuItems.length} {menuItems.length === 1 ? 'Item' : 'Items'} Found
-                </span>
+              {/* Sort By */}
+              <div className="relative lg:w-48">
+                <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full p-4 bg-gray-700 border border-gray-600 rounded-xl text-white appearance-none focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+                >
+                    <option value="newest">Newest First</option>
+                    <option value="price">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                    <option value="name">Name: A to Z</option>
+                    <option value="featured">Featured First</option>
+                </select>
               </div>
+
+              {/* Advanced Filters Toggle */}
+              <button
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-all flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                </svg>
+                Filters
+              </button>
+            </div>
+
+            {/* Advanced Filters Panel */}
+            {showAdvancedFilters && (
+              <div className="border-t border-gray-600 pt-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Price Range */}
+                  <div>
+                    <label className="block text-white text-sm font-medium mb-2">Price Range</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        placeholder="Min $"
+                        value={priceRange.min}
+                        onChange={(e) => setPriceRange({...priceRange, min: e.target.value})}
+                        className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Max $"
+                        value={priceRange.max}
+                        onChange={(e) => setPriceRange({...priceRange, max: e.target.value})}
+                        className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Ingredients Filter */}
+                  <div>
+                    <label className="block text-white text-sm font-medium mb-2">Ingredients</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., cheese, tomato, chicken"
+                      value={ingredientFilter}
+                      onChange={(e) => setIngredientFilter(e.target.value)}
+                      className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+
+                  {/* Clear Filters */}
+                  <div className="flex items-end">
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSelectedCategory('all');
+                        setPriceRange({ min: '', max: '' });
+                        setIngredientFilter('');
+                        setSortBy('newest');
+                      }}
+                      className="w-full p-3 bg-gray-600 hover:bg-gray-500 text-white rounded-lg font-medium transition-all"
+                    >
+                      Clear All Filters
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Results Count */}
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-600">
+              <span className="text-gray-300">
+                Showing {menuItems.length} {menuItems.length === 1 ? 'item' : 'items'}
+              </span>
+              <span className="px-4 py-2 bg-gradient-to-r from-red-600 to-orange-500 text-white rounded-lg font-semibold text-sm">
+                {menuItems.length} Found
+              </span>
             </div>
           </div>
         </div>

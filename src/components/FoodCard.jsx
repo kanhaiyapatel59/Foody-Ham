@@ -4,6 +4,8 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../context/AuthContext';
 import { FaHeart, FaRegHeart, FaSpinner, FaStar, FaShoppingCart, FaEye, FaTag, FaFire } from 'react-icons/fa';
+import WishlistButton from './WishlistButton';
+import StarRating from './StarRating';
 
 function FoodCard({ 
   id, 
@@ -14,6 +16,8 @@ function FoodCard({
   isFeatured: initialIsFeatured, 
   category,
   rating,
+  averageRating,
+  totalReviews,
   className = ''
 }) {
   const { addToCart } = useCart();
@@ -116,15 +120,10 @@ function FoodCard({
           </div>
         )}
 
-        {/* Category Badge - Top Right */}
-        {category && (
-          <div className="absolute top-4 right-4 z-20">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-xl flex items-center gap-1.5">
-              <FaTag className="w-3 h-3" />
-              <span>{category.toUpperCase()}</span>
-            </div>
-          </div>
-        )}
+        {/* Wishlist Button - Top Right */}
+        <div className="absolute top-4 right-4 z-20">
+          <WishlistButton product={product} className="shadow-lg" />
+        </div>
 
         {/* ADMIN FEATURE TOGGLE BUTTON - Must use a <button> and stop propagation */}
         {user && user.isAdmin && (
@@ -192,20 +191,21 @@ function FoodCard({
             </div>
           </div>
 
-          {rating && (
+          {(averageRating > 0 || rating > 0) && (
             <div className="mb-5">
-              <div className="flex items-center gap-2">
-                <div className="flex text-amber-500">
-                  {[...Array(5)].map((_, i) => (
-                    <FaStar 
-                      key={i} 
-                      className={`w-4 h-4 ${i < Math.floor(rating) ? 'fill-current' : 'text-gray-300'}`}
-                    />
-                  ))}
-                </div>
-                <span className="text-sm font-semibold text-gray-700 ml-1">{rating.toFixed(1)}</span>
-                <span className="text-xs text-gray-500">/5.0</span>
-              </div>
+              <StarRating 
+                rating={averageRating || rating || 0} 
+                totalReviews={totalReviews || 0} 
+                size="sm" 
+              />
+            </div>
+          )}
+          
+          {category && (
+            <div className="mb-3">
+              <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </span>
             </div>
           )}
         </div>
@@ -227,14 +227,13 @@ function FoodCard({
         
         <button
           onClick={handleAddToCart}
-          className={`flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-3.5 rounded-xl font-medium transition-all duration-300 
-                    ${!user ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl hover:shadow-orange-500/30 hover:from-orange-600 hover:to-amber-600'} 
-                    group/cart flex items-center justify-center gap-2.5 shadow-md`}
-          disabled={!user}
+          className={`flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-3.5 rounded-xl font-bold transition-all duration-300 
+                    ${!user ? 'opacity-70 cursor-not-allowed bg-gray-400' : 'hover:shadow-xl hover:shadow-red-500/30 hover:from-red-600 hover:to-red-700'} 
+                    group/cart flex items-center justify-center gap-2.5 shadow-lg`}
           title={!user ? "Login to add to cart" : "Add to cart"}
         >
-          <FaShoppingCart className="w-4.5 h-4.5" />
-          Add to Cart
+          <FaShoppingCart className="w-4 h-4" />
+          {!user ? 'Login to Add' : 'Add to Cart'}
         </button>
       </div>
 

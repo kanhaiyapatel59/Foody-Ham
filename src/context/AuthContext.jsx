@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import axios from "axios";
-// import { auth } from "../firebase"; 
-// import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider, facebookProvider, appleProvider } from "../firebase"; 
+import { signInWithPopup } from 'firebase/auth';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export const api = axios.create({
-    baseURL: "http://localhost:3000/api",
+    baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api",
     headers: {
         "Content-Type": "application/json",
     },
@@ -19,6 +20,33 @@ api.interceptors.request.use(
         return config;
     },
     (error) => Promise.reject(error)
+);
+
+// Response interceptor to handle token expiration and network errors
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        // Handle network errors
+        if (!error.response) {
+            error.message = 'Network error. Please check your connection.';
+        }
+        
+        // Handle token expiration
+        if (error.response?.status === 401) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("tokenExpiration");
+            localStorage.removeItem("user");
+            localStorage.removeItem('foodyham_cart');
+            window.location.href = '/login';
+        }
+        
+        // Handle server errors
+        if (error.response?.status >= 500) {
+            error.message = 'Server error. Please try again later.';
+        }
+        
+        return Promise.reject(error);
+    }
 );
 
 const AuthContext = createContext();
@@ -38,7 +66,12 @@ export const AuthProvider = ({ children }) => {
             ...cleanUser,
             isAdmin: cleanUser.role === "admin",
         };
+        
+        // Store token with expiration timestamp (30 days from now)
+        const expirationTime = Date.now() + (30 * 24 * 60 * 60 * 1000);
+        
         localStorage.setItem("token", token);
+        localStorage.setItem("tokenExpiration", expirationTime.toString());
         localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
         return userData;
@@ -48,20 +81,41 @@ export const AuthProvider = ({ children }) => {
     INIT AUTH (ON APP LOAD)
     ========================= */
     useEffect(() => {
-        const initAuth = () => {
+        const initAuth = async () => {
             const storedUser = localStorage.getItem("user");
             const storedToken = localStorage.getItem("token");
-            if (!storedUser || !storedToken || storedToken === "undefined") {
+            
+            if (!storedUser || !storedToken || storedToken === "undefined" || isTokenExpired()) {
+                if (isTokenExpired()) {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("tokenExpiration");
+                    localStorage.removeItem("user");
+                    localStorage.removeItem('foodyham_cart');
+                }
                 setLoading(false);
                 return;
             }
+            
             try {
                 const parsedUser = JSON.parse(storedUser);
-                setUser({ ...parsedUser, isAdmin: parsedUser.role === 'admin' });
+                
+                // Validate token by making a test request
+                try {
+                    await api.get('/auth/profile');
+                    setUser({ ...parsedUser, isAdmin: parsedUser.role === 'admin' });
+                } catch (tokenError) {
+                    // Token is invalid/expired
+                    console.log('Token validation failed, logging out');
+                    localStorage.removeItem("user");
+                    localStorage.removeItem("token");
+                    localStorage.removeItem('foodyham_cart');
+                    setUser(null);
+                }
             } catch (e) {
                 console.error("Error parsing stored user:", e);
                 localStorage.removeItem("user");
                 localStorage.removeItem("token");
+                localStorage.removeItem('foodyham_cart');
                 setUser(null);
             }
             setLoading(false);
@@ -120,16 +174,25 @@ export const AuthProvider = ({ children }) => {
     ========================= */
     const logout = useCallback(() => {
         localStorage.removeItem("token");
+        localStorage.removeItem("tokenExpiration");
         localStorage.removeItem("user");
-
         localStorage.removeItem('foodyham_cart'); 
         setUser(null);
     }, []);
 
     /* =========================
+    CHECK TOKEN EXPIRATION
+    ========================= */
+    const isTokenExpired = useCallback(() => {
+        const expiration = localStorage.getItem("tokenExpiration");
+        if (!expiration) return true;
+        return Date.now() > parseInt(expiration);
+    }, []);
+
+    /* =========================
     UPDATE PROFILE (NEW IMPLEMENTATION)
     ========================= */
-    const updateProfile = async (profileData) => {
+    const updateProfile = useCallback(async (profileData) => {
         setError("");
         try {
 
@@ -158,12 +221,12 @@ export const AuthProvider = ({ children }) => {
             setError(message);
             throw new Error(message);
         }
-    };
+    }, []);
 
     /* =========================
     CHANGE PASSWORD (FIXED IMPLEMENTATION)
     ========================= */
-    const changePassword = async (currentPassword, newPassword) => {
+    const changePassword = useCallback(async (currentPassword, newPassword) => {
         setError("");
         try {
             const res = await api.put("/auth/password", {
@@ -181,47 +244,57 @@ export const AuthProvider = ({ children }) => {
             setError(message);
             throw new Error(message);
         }
-    };
+    }, []);
 
     /* =========================
-    GOOGLE SIGN-IN (NEW IMPLEMENTATION)
+    SOCIAL SIGN-IN METHODS
     ========================= */
-    const googleSignIn = useCallback(async () => {
+    const socialSignIn = useCallback(async (provider, providerName) => {
         setError("");
+        
+        // Check if Firebase is configured
+        if (!auth || !provider) {
+            const message = `${providerName} authentication is not configured. Please set up Firebase credentials.`;
+            setError(message);
+            throw new Error(message);
+        }
+        
         try {
-            const provider = new GoogleAuthProvider();
             // 1. Authenticate with Firebase
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
             
             // 2. Send Firebase ID Token to your backend for verification
             const idToken = await user.getIdToken();
-            const response = await api.post('/auth/google', {
-                token: idToken
+            const response = await api.post('/auth/social', {
+                token: idToken,
+                provider: providerName
             });
             
-            // 3. Handle response from your backend (which returns your internal JWT and user data)
+            // 3. Handle response from your backend
             const backendUser = response.data.data;
             const token = backendUser.token;
             
             if (!token) {
-                throw new Error("Internal token missing after Google login.");
+                throw new Error(`Internal token missing after ${providerName} login.`);
             }
             
             const { token: _, ...cleanUser } = backendUser;
             return updateAuth(token, cleanUser);
         } catch (err) {
-            // Check if error is from Firebase popup (user closed it)
             if (err.code === 'auth/popup-closed-by-user') {
-                setError("Google sign-in was closed.");
+                setError(`${providerName} sign-in was closed.`);
             } else {
-                // Handle backend errors or other Firebase errors
-                const message = err.response?.data?.message || err.message || "Google Sign-In failed.";
+                const message = err.response?.data?.message || err.message || `${providerName} Sign-In failed.`;
                 setError(message);
                 throw new Error(message);
             }
         }
     }, [updateAuth]);
+
+    const googleSignIn = useCallback(() => socialSignIn(googleProvider, 'Google'), [socialSignIn]);
+    const facebookSignIn = useCallback(() => socialSignIn(facebookProvider, 'Facebook'), [socialSignIn]);
+    const appleSignIn = useCallback(() => socialSignIn(appleProvider, 'Apple'), [socialSignIn]);
 
 
     /* =========================
@@ -239,11 +312,16 @@ export const AuthProvider = ({ children }) => {
                 clearError,
                 updateProfile, 
                 changePassword,
-                googleSignIn, 
+
+                isTokenExpired, 
             }}
         >
             {!loading && children}
-            {loading && <div className="text-center py-20 text-gray-500">Loading application...</div>}
+            {loading && (
+                <div className="min-h-screen flex items-center justify-center">
+                    <LoadingSpinner size="lg" text="Loading application..." />
+                </div>
+            )}
         </AuthContext.Provider>
     );
 };

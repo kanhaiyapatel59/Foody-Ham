@@ -32,7 +32,7 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const { login, register, googleSignIn, error: authError, clearError } = useAuth();
+  const { login, register, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/';
@@ -91,20 +91,7 @@ function LoginPage() {
     }
   };
 
-  // NOTE: This function is preserved but not used by the disabled button
-  const handleGoogleSignIn = async () => {
-    try {
-      setGoogleLoading(true);
-      setLocalError('');
-      clearError();
-      await googleSignIn();
-      navigate(from, { replace: true });
-    } catch (err) {
-      setLocalError(err.message || 'Google sign-in failed.');
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
+
 
   const displayError = localError || authError;
 
@@ -305,41 +292,17 @@ function LoginPage() {
 
               {/* Social Login Buttons */}
               <div className="grid grid-cols-1 gap-4">
-                {/* Google Button (Disabled) */}
+                {/* Google Button - Coming Soon */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => setLocalError('Google authentication is being prepared and will be available soon!')}
+                  onClick={() => setLocalError('Google authentication coming soon!')}
                   disabled={true}
                   className="w-full bg-white border-2 border-gray-200 text-gray-700 py-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-3 opacity-70 cursor-not-allowed shadow-sm"
                 >
                   <FaGoogle className="text-red-500 text-xl" />
                   <span>Google Auth (Coming Soon)</span>
                 </motion.button>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    disabled={true}
-                    onClick={() => setLocalError('Apple sign-in coming soon.')}
-                    className="w-full bg-black text-white py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-3 opacity-70 cursor-not-allowed shadow-sm"
-                  >
-                    <FaApple className="text-xl" />
-                    <span>Apple</span>
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    disabled={true}
-                    onClick={() => setLocalError('Facebook sign-in coming soon.')}
-                    className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-3 opacity-70 cursor-not-allowed shadow-sm"
-                  >
-                    <FaFacebook className="text-xl" />
-                    <span>Facebook</span>
-                  </motion.button>
-                </div>
               </div>
             </div>
 

@@ -20,7 +20,7 @@ import {
   FaStar
 } from 'react-icons/fa';
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: 'http://localhost:3003/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

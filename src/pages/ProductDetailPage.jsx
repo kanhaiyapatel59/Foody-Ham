@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useRecentlyViewed } from '../context/RecentlyViewedContext';
+import WishlistButton from '../components/WishlistButton';
+import StarRating from '../components/StarRating';
 import axios from 'axios';
+import { FaStar, FaRegStar } from 'react-icons/fa';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -37,6 +41,10 @@ function ProductDetailPage() {
   const [food, setFood] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reviews, setReviews] = useState([]);
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const { addToRecentlyViewed } = useRecentlyViewed();
 
   useEffect(() => {
     fetchProduct();
@@ -79,6 +87,12 @@ function ProductDetailPage() {
         };
 
         setFood(formattedProduct);
+        
+        // Add to recently viewed
+        addToRecentlyViewed(formattedProduct);
+        
+        // Fetch reviews
+        fetchReviews(productData._id);
       } else {
         setError('Product not found');
       }
@@ -93,6 +107,7 @@ function ProductDetailPage() {
         
         if (customProduct) {
           setFood(customProduct);
+          addToRecentlyViewed(customProduct);
         } else {
           setError('Product not found');
         }
@@ -101,6 +116,45 @@ function ProductDetailPage() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReviews = async (productId) => {
+    try {
+      const response = await api.get(`/reviews/product/${productId}`);
+      if (response.data.success) {
+        setReviews(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    }
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      alert('Please login to submit a review');
+      return;
+    }
+
+    setReviewLoading(true);
+    try {
+      const response = await api.post('/reviews', {
+        productId: food.id,
+        rating: newReview.rating,
+        comment: newReview.comment
+      });
+
+      if (response.data.success) {
+        setNewReview({ rating: 5, comment: '' });
+        fetchReviews(food.id);
+        fetchProduct(); // Refresh product to get updated rating
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert('Failed to submit review');
+    } finally {
+      setReviewLoading(false);
     }
   };
 
@@ -211,6 +265,17 @@ function ProductDetailPage() {
             </div>
           </div>
 
+          {/* Rating Display */}
+          {food.averageRating > 0 && (
+            <div className="mb-6">
+              <StarRating 
+                rating={food.averageRating} 
+                totalReviews={food.totalReviews} 
+                size="lg" 
+              />
+            </div>
+          )}
+
           <div className="flex items-center justify-between border-t pt-8">
             <div>
               <div className="text-3xl font-bold text-orange-500">
@@ -218,15 +283,91 @@ function ProductDetailPage() {
               </div>
               <div className="text-gray-500">Price includes tax</div>
             </div>
-            <button 
-              onClick={handleAddToCart}
-              disabled={!user}
-              className="bg-orange-500 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-orange-600 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              title={!user ? "Login to add to cart" : "Add to cart"}
-            >
-              {!user ? "Login to Add to Cart" : "Add to Cart"}
-            </button>
+            <div className="flex items-center gap-4">
+              <WishlistButton product={food} className="text-2xl" />
+              <button 
+                onClick={handleAddToCart}
+                disabled={!user}
+                className="bg-orange-500 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-orange-600 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!user ? "Login to add to cart" : "Add to cart"}
+              >
+                {!user ? "Login to Add to Cart" : "Add to Cart"}
+              </button>
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Reviews Section */}
+      <div className="mt-16">
+        <h2 className="text-3xl font-bold text-gray-800 mb-8">Reviews & Ratings</h2>
+        
+        {/* Add Review Form */}
+        {user && (
+          <div className="bg-gray-50 p-6 rounded-lg mb-8">
+            <h3 className="text-xl font-semibold mb-4">Write a Review</h3>
+            <form onSubmit={handleReviewSubmit}>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">Rating</label>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setNewReview({...newReview, rating: star})}
+                      className="text-2xl transition-colors"
+                    >
+                      {star <= newReview.rating ? (
+                        <FaStar className="text-yellow-500" />
+                      ) : (
+                        <FaRegStar className="text-gray-300" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">Comment</label>
+                <textarea
+                  value={newReview.comment}
+                  onChange={(e) => setNewReview({...newReview, comment: e.target.value})}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  rows="4"
+                  placeholder="Share your experience with this dish..."
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={reviewLoading}
+                className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition duration-300 disabled:opacity-50"
+              >
+                {reviewLoading ? 'Submitting...' : 'Submit Review'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Reviews List */}
+        <div className="space-y-6">
+          {reviews.length === 0 ? (
+            <p className="text-gray-600 text-center py-8">No reviews yet. Be the first to review this dish!</p>
+          ) : (
+            reviews.map((review) => (
+              <div key={review._id} className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h4 className="font-semibold text-gray-800">{review.user?.name || 'Anonymous'}</h4>
+                    <StarRating rating={review.rating} showCount={false} size="sm" />
+                  </div>
+                  <span className="text-gray-500 text-sm">
+                    {new Date(review.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-gray-700">{review.comment}</p>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
