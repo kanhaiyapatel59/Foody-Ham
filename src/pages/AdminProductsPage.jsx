@@ -5,7 +5,7 @@ import { FaEdit, FaTrash, FaEye, FaPlus, FaSpinner } from 'react-icons/fa';
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3003/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3005/api',
   withCredentials: true,
 });
 

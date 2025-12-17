@@ -5,12 +5,26 @@ import { FaStar, FaRegStar, FaPaperPlane, FaTimesCircle } from 'react-icons/fa';
 
 // Setup API instance (assuming this structure is consistent across your app)
 const api = axios.create({
-  baseURL: 'http://localhost:3003/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3005/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Add token to requests if available
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 const FeedbackPage = () => {
   const [rating, setRating] = useState(0);

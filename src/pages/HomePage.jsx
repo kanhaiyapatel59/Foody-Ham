@@ -329,7 +329,7 @@ function HomePage() {
                   delay: 3000,
                   disableOnInteraction: false,
                 }}
-                loop={true}
+                loop={featuredFoods.length > 4}
                 className="pb-12"
               >
                 {featuredFoods.map((food) => (

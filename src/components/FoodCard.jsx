@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../context/AuthContext';
-import { FaHeart, FaRegHeart, FaSpinner, FaStar, FaShoppingCart, FaEye, FaTag, FaFire } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaSpinner, FaStar, FaShoppingCart, FaEye, FaTag, FaFire, FaShare } from 'react-icons/fa';
 import WishlistButton from './WishlistButton';
 import StarRating from './StarRating';
+import SocialShare from './SocialShare';
 
 function FoodCard({ 
   id, 
@@ -18,6 +19,7 @@ function FoodCard({
   rating,
   averageRating,
   totalReviews,
+  nutritionalInfo,
   className = ''
 }) {
   const { addToCart } = useCart();
@@ -28,6 +30,7 @@ function FoodCard({
   const [loadingFeature, setLoadingFeature] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   const product = { 
     id, 
@@ -37,7 +40,8 @@ function FoodCard({
     price: parseFloat(price),
     category,
     isFeatured,
-    rating 
+    rating,
+    nutritionalInfo
   };
   
   const handleAddToCart = (e) => {
@@ -147,7 +151,7 @@ function FoodCard({
         )}
 
         {/* Image Container */}
-        <div className="relative h-56 md:h-64 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+        <div className="relative h-48 md:h-56 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
           {/* Loading Skeleton */}
           {!imageLoaded && (
             <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse"></div>
@@ -172,27 +176,39 @@ function FoodCard({
               >
                 <FaShoppingCart className="w-5 h-5" />
               </button>
+              
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowShare(true);
+                }}
+                className="bg-white text-gray-800 p-3.5 rounded-full hover:bg-blue-500 hover:text-white transition-all duration-300 transform hover:scale-110 shadow-lg"
+                title="Share this item"
+              >
+                <FaShare className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
 
         {/* Content Section */}
-        <div className="flex-1 flex flex-col p-5">
-          <h3 className="font-bold text-gray-900 text-xl mb-3 group-hover:text-orange-600 transition-colors duration-300 line-clamp-1 tracking-tight">
+        <div className="flex-1 flex flex-col p-3">
+          <h3 className="font-bold text-gray-900 text-lg mb-2 group-hover:text-orange-600 transition-colors duration-300 line-clamp-1 tracking-tight">
             {name}
           </h3>
           
           {/* Price Section */}
-          <div className="mb-5">
+          <div className="mb-3">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-gray-900 tracking-tight">
+              <span className="text-2xl font-bold text-gray-900 tracking-tight">
                 ${typeof price === 'number' ? price.toFixed(2) : price}
               </span>
             </div>
           </div>
 
           {(averageRating > 0 || rating > 0) && (
-            <div className="mb-5">
+            <div className="mb-3">
               <StarRating 
                 rating={averageRating || rating || 0} 
                 totalReviews={totalReviews || 0} 
@@ -202,7 +218,7 @@ function FoodCard({
           )}
           
           {category && (
-            <div className="mb-3">
+            <div className="mb-2">
               <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
                 {category.charAt(0).toUpperCase() + category.slice(1)}
               </span>
@@ -213,29 +229,36 @@ function FoodCard({
       {/* 🛑 CONTENT WRAPPER closes here (It is now a div, not a Link) */}
       
       {/* FINAL Action Buttons - These buttons are correctly placed outside the wrapper. */}
-      <div className="p-5 pt-0 flex gap-3 mt-auto"> 
+      <div className="p-3 pt-0 flex gap-2 mt-auto"> 
         
         <button
           onClick={handleViewDetails} 
-          className="flex-1 bg-gradient-to-r from-gray-400 to-gray-800 text-white px-4 py-3.5 rounded-xl hover:from-gray-900 hover:to-black transition-all duration-300 font-medium text-center group/view shadow-md"
+          className="flex-1 bg-gradient-to-r from-gray-400 to-gray-800 text-white px-3 py-2.5 rounded-lg hover:from-gray-900 hover:to-black transition-all duration-300 font-medium text-center group/view shadow-md text-sm"
         >
-          <span className="flex items-center justify-center gap-2.5">
-            <FaEye className="w-4.5 h-4.5" />
+          <span className="flex items-center justify-center gap-1.5">
+            <FaEye className="w-3.5 h-3.5" />
             View Details
           </span>
         </button>
         
         <button
           onClick={handleAddToCart}
-          className={`flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-3.5 rounded-xl font-bold transition-all duration-300 
+          className={`flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-2.5 rounded-lg font-bold transition-all duration-300 text-sm
                     ${!user ? 'opacity-70 cursor-not-allowed bg-gray-400' : 'hover:shadow-xl hover:shadow-red-500/30 hover:from-red-600 hover:to-red-700'} 
-                    group/cart flex items-center justify-center gap-2.5 shadow-lg`}
+                    group/cart flex items-center justify-center gap-1.5 shadow-lg`}
           title={!user ? "Login to add to cart" : "Add to cart"}
         >
-          <FaShoppingCart className="w-4 h-4" />
+          <FaShoppingCart className="w-3.5 h-3.5" />
           {!user ? 'Login to Add' : 'Add to Cart'}
         </button>
       </div>
+
+      {/* Social Share Modal */}
+      <SocialShare 
+        product={product} 
+        isOpen={showShare} 
+        onClose={() => setShowShare(false)} 
+      />
 
     </div>
   );

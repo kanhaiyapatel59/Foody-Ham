@@ -115,6 +115,15 @@ function MenuPage() {
           price: product.price,
           category: product.category,
           ingredients: product.ingredients || [],
+          nutritionalInfo: product.nutritionalInfo || {
+            calories: 0,
+            protein: "0g",
+            carbs: "0g",
+            fat: "0g"
+          },
+          averageRating: product.averageRating || 0,
+          totalReviews: product.totalReviews || 0,
+          isFeatured: product.isFeatured || false,
           ...(product._id && { _id: product._id })
         }));
 

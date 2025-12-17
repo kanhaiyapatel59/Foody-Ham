@@ -127,10 +127,10 @@ function CartPage() {
                     </div>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-orange-500">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ${((item.price || 0) * item.quantity).toFixed(2)}
                       </div>
                       <div className="text-gray-500 text-sm">
-                        ${item.price.toFixed(2)} each
+                        ${(item.price || 0).toFixed(2)} each
                       </div>
                     </div>
                   </div>

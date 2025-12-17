@@ -4,6 +4,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaShoppingCart, FaUser, FaPlus, FaSignOutAlt, FaBars, FaTimes, FaSpinner, FaHome, FaUtensils, FaInfoCircle, FaEnvelope, FaCrown, FaHeart } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import AdminSidebar from './AdminSidebar';
+import UserSidebar from './UserSidebar';
 
 function Navbar() {
   const location = useLocation();
@@ -12,7 +14,8 @@ function Navbar() {
   const { user, logout, loading: authLoading } = useAuth();
   const { getCartCount, loading: cartLoading } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [showAdminSidebar, setShowAdminSidebar] = useState(false);
+  const [showUserSidebar, setShowUserSidebar] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   // Detect scroll for navbar effect
@@ -37,7 +40,8 @@ function Navbar() {
   const handleLogout = () => {
     logout();
     navigate('/');
-    setShowDropdown(false);
+    setShowAdminSidebar(false);
+    setShowUserSidebar(false);
     setIsMenuOpen(false);
   };
 
@@ -165,7 +169,7 @@ function Navbar() {
             ) : user ? (
               <div className="relative">
                 <button
-                  onClick={() => setShowDropdown(!showDropdown)}
+                  onClick={() => user.isAdmin ? setShowAdminSidebar(!showAdminSidebar) : setShowUserSidebar(!showUserSidebar)}
                   className="flex items-center gap-3 group"
                   disabled={authLoading}
                 >
@@ -195,120 +199,7 @@ function Navbar() {
                   </div>
                 </button>
 
-                {/* Enhanced Dropdown Menu */}
-                {showDropdown && (
-                  <>
-                    {/* Backdrop */}
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setShowDropdown(false)}
-                    />
-                    
-                    <div className="absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl py-3 z-50 border border-gray-200/50">
-                      {/* User Info Section */}
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-amber-100 rounded-full flex items-center justify-center">
-                            <FaUser className="text-orange-500 text-xl" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900">{user.name}</p>
-                            <p className="text-sm text-gray-600">{user.email}</p>
-                          </div>
-                        </div>
-                        {user.isAdmin && (
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-50 to-orange-50 rounded-full border border-amber-200">
-                            <FaCrown className="text-amber-500 text-xs" />
-                            <span className="text-xs font-semibold text-amber-700">Administrator</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Menu Items */}
-                      <div className="py-2">
-                        {user.isAdmin && (
-                          <>
-                            <Link
-                              to="/admin/products"
-                              className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50/50 transition-colors duration-200 group"
-                              onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
-                            >
-                              <div className="w-8 h-8 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex items-center justify-center group-hover:from-blue-100 group-hover:to-blue-200">
-                                <FaPlus className="text-blue-500" />
-                              </div>
-                              <span className="font-medium text-gray-700">Manage Products</span>
-                            </Link>
-                            
-                            <Link
-                              to="/admin/analytics"
-                              className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50/50 transition-colors duration-200 group"
-                              onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
-                            >
-                              <div className="w-8 h-8 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg flex items-center justify-center group-hover:from-purple-100 group-hover:to-purple-200">
-                                <span className="text-purple-500 text-sm font-bold">📊</span>
-                              </div>
-                              <span className="font-medium text-gray-700">Analytics</span>
-                            </Link>
-                            
-                            <Link
-                              to="/admin/coupons"
-                              className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50/50 transition-colors duration-200 group"
-                              onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
-                            >
-                              <div className="w-8 h-8 bg-gradient-to-br from-green-50 to-green-100 rounded-lg flex items-center justify-center group-hover:from-green-100 group-hover:to-green-200">
-                                <span className="text-green-500 text-sm font-bold">🎫</span>
-                              </div>
-                              <span className="font-medium text-gray-700">Coupons</span>
-                            </Link>
-                            
-                            <Link
-                              to="/admin/orders"
-                              className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50/50 transition-colors duration-200 group"
-                              onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
-                            >
-                              <div className="w-8 h-8 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg flex items-center justify-center group-hover:from-indigo-100 group-hover:to-indigo-200">
-                                <span className="text-indigo-500 text-sm font-bold">📦</span>
-                              </div>
-                              <span className="font-medium text-gray-700">Orders</span>
-                            </Link>
-                          </>
-                        )}
-                        
-                        <Link
-                          to="/profile"
-                          className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50/50 transition-colors duration-200 group"
-                          onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
-                        >
-                          <div className="w-8 h-8 bg-gradient-to-br from-green-50 to-green-100 rounded-lg flex items-center justify-center group-hover:from-green-100 group-hover:to-green-200">
-                            <FaUser className="text-green-500" />
-                          </div>
-                          <span className="font-medium text-gray-700">My Profile</span>
-                        </Link>
-                        
-                        <Link
-                          to="/orders"
-                          className="flex items-center gap-3 px-4 py-3 hover:bg-orange-50/50 transition-colors duration-200 group"
-                          onClick={() => { setShowDropdown(false); setIsMenuOpen(false); }}
-                        >
-                          <div className="w-8 h-8 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex items-center justify-center group-hover:from-blue-100 group-hover:to-blue-200">
-                            <span className="text-blue-500 text-sm font-bold">📋</span>
-                          </div>
-                          <span className="font-medium text-gray-700">My Orders</span>
-                        </Link>
-                        
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50/50 transition-colors duration-200 group text-left"
-                        >
-                          <div className="w-8 h-8 bg-gradient-to-br from-red-50 to-red-100 rounded-lg flex items-center justify-center group-hover:from-red-100 group-hover:to-red-200">
-                            <FaSignOutAlt className="text-red-500" />
-                          </div>
-                          <span className="font-medium text-red-600">Logout</span>
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
+
               </div>
             ) : (
               <Link
@@ -442,6 +333,22 @@ function Navbar() {
           </div>
         )}
       </div>
+      
+      {/* Admin Sidebar */}
+      <AdminSidebar 
+        isOpen={showAdminSidebar}
+        onClose={() => setShowAdminSidebar(false)}
+        user={user}
+        onLogout={handleLogout}
+      />
+      
+      {/* User Sidebar */}
+      <UserSidebar 
+        isOpen={showUserSidebar}
+        onClose={() => setShowUserSidebar(false)}
+        user={user}
+        onLogout={handleLogout}
+      />
     </nav>
   );
 }

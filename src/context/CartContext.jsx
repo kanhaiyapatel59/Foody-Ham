@@ -99,15 +99,22 @@ export const CartProvider = ({ children }) => {
           quantity
         });
         
-        setCartItems(response.data.data.items || []);
+        if (response.data.success) {
+          setCartItems(response.data.data.items || []);
+        } else {
+          throw new Error(response.data.message || 'Failed to add to cart');
+        }
       } catch (error) {
         console.error('Error adding to cart:', error);
+        // Show user-friendly message
+        alert('Added to cart locally. Please refresh to sync with server.');
         // Fallback to localStorage
         updateLocalStorage(productWithNumberPrice, quantity);
       }
     } else {
       // Add to localStorage if not logged in
       updateLocalStorage(productWithNumberPrice, quantity);
+      alert('Item added to cart! Please login to save your cart.');
     }
   }, [user]);
 
@@ -206,8 +213,9 @@ export const CartProvider = ({ children }) => {
 
   const getCartTotal = useCallback(() => {
     return cartItems.reduce((total, item) => {
-      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-      return total + (price * item.quantity);
+      const price = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
+      const quantity = item.quantity || 0;
+      return total + (price * quantity);
     }, 0);
   }, [cartItems]);
 

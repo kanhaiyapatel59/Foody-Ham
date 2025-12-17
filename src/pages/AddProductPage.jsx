@@ -20,7 +20,7 @@ import {
   FaStar
 } from 'react-icons/fa';
 const api = axios.create({
-  baseURL: 'http://localhost:3003/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3004/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ function AddProductPage() {
     protein: '',
     carbs: '',
     fat: '',
-    category: '',
+    category: 'burgers',
     isFeatured: false,
     preparationTime: '30'
   });
@@ -116,17 +116,10 @@ function AddProductPage() {
       setLoading(true);
       setError('');
 
-      // --- Client-side validation ---
-      // Check required fields before sending to the server
-      if (!formData.name || !formData.description || !formData.price || !formData.category || !formData.fullDescription) {
-        throw new Error('Please fill in all required fields (Name, Category, Price, Short & Full Description).');
-      }
-      
       const price = parseFloat(formData.price);
       if (isNaN(price) || price <= 0) {
         throw new Error('Price must be a valid positive number.');
       }
-      // --- End client-side validation ---
 
 
       const productData = {
@@ -348,7 +341,6 @@ function AddProductPage() {
                         value={formData.category}
                         onChange={handleChange}
                         className="w-full px-5 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300 appearance-none"
-                        required
                         disabled={loading}
                       >
                         <option value="">Select Category</option>
@@ -444,7 +436,6 @@ function AddProductPage() {
                       onChange={handleChange}
                       className="w-full px-5 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
                       rows="5"
-                      required
                       disabled={loading}
                       placeholder="Detailed description, serving size, preparation method..."
                     />

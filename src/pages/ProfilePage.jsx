@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaSave, FaLock, FaCalendar, FaUserShield } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaSave, FaLock, FaCalendar, FaUserShield, FaCamera, FaHeart, FaStar, FaBell } from 'react-icons/fa';
 
 function ProfilePage() {
   const { user, updateProfile, changePassword, loading: authLoading } = useAuth();
@@ -10,8 +10,14 @@ function ProfilePage() {
     name: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    bio: '',
+    dateOfBirth: '',
+    dietaryRestrictions: [],
+    favoriteCategories: []
   });
+  const [profileImage, setProfileImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -28,8 +34,13 @@ function ProfilePage() {
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
-        address: user.address || ''
+        address: typeof user.address === 'string' ? user.address : '',
+        bio: user.bio || '',
+        dateOfBirth: user.dateOfBirth ? user.dateOfBirth.split('T')[0] : '',
+        dietaryRestrictions: user.preferences?.dietaryRestrictions || [],
+        favoriteCategories: user.preferences?.favoriteCategories || []
       });
+      setImagePreview(user.profileImage || '');
     }
   }, [user]);
 
@@ -51,6 +62,27 @@ function ProfilePage() {
     setMessage('');
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleArrayChange = (field, value, checked) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: checked 
+        ? [...prev[field], value]
+        : prev[field].filter(item => item !== value)
+    }));
+  };
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setError('');
@@ -58,7 +90,19 @@ function ProfilePage() {
     setLoading(true);
 
     try {
-      await updateProfile(formData);
+      // Prepare data with proper structure
+      const profileData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        bio: formData.bio,
+        dateOfBirth: formData.dateOfBirth,
+        dietaryRestrictions: formData.dietaryRestrictions,
+        favoriteCategories: formData.favoriteCategories
+      };
+      
+      await updateProfile(profileData);
       setMessage('Profile updated successfully!');
       setIsEditing(false);
     } catch (err) {
@@ -168,14 +212,35 @@ function ProfilePage() {
             {/* Profile Card */}
             <div className="bg-white rounded-lg shadow-lg p-8">
               <div className="flex items-center mb-6">
-                <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mr-4">
-                  {user.isAdmin ? (
-                    <FaUserShield className="text-3xl text-orange-500" />
+                <div className="relative">
+                  {user.profileImage || imagePreview ? (
+                    <img 
+                      src={imagePreview || user.profileImage} 
+                      alt="Profile" 
+                      className="w-20 h-20 rounded-full object-cover border-4 border-orange-100"
+                    />
                   ) : (
-                    <FaUser className="text-3xl text-orange-500" />
+                    <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center">
+                      {user.isAdmin ? (
+                        <FaUserShield className="text-3xl text-orange-500" />
+                      ) : (
+                        <FaUser className="text-3xl text-orange-500" />
+                      )}
+                    </div>
+                  )}
+                  {isEditing && (
+                    <label className="absolute bottom-0 right-0 bg-orange-500 text-white p-1 rounded-full cursor-pointer hover:bg-orange-600">
+                      <FaCamera className="text-xs" />
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={handleImageChange}
+                      />
+                    </label>
                   )}
                 </div>
-                <div>
+                <div className="ml-4">
                   <h2 className="text-2xl font-bold text-gray-800">{user.name}</h2>
                   <p className="text-gray-600">{user.email}</p>
                   {user.isAdmin && (
@@ -205,12 +270,25 @@ function ProfilePage() {
                   </div>
                 )}
 
-                {user.address && (
+                {(user.address || (typeof user.address === 'object' && user.address.street)) && (
                   <div className="flex items-center">
                     <FaMapMarkerAlt className="text-gray-400 mr-3" />
                     <div>
                       <div className="text-sm text-gray-500">Address</div>
-                      <div className="font-medium">{user.address}</div>
+                      <div className="font-medium">
+                        {typeof user.address === 'string' ? user.address : 
+                         `${user.address?.street || ''} ${user.address?.city || ''} ${user.address?.state || ''}`}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {user.bio && (
+                  <div className="flex items-start">
+                    <FaUser className="text-gray-400 mr-3 mt-1" />
+                    <div>
+                      <div className="text-sm text-gray-500">Bio</div>
+                      <div className="font-medium">{user.bio}</div>
                     </div>
                   </div>
                 )}
@@ -235,9 +313,9 @@ function ProfilePage() {
               </div>
             </div>
 
-            {/* Account Info */}
+            {/* Account Info & Preferences */}
             <div className="bg-white rounded-lg shadow-lg p-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-6">Account Information</h3>
+              <h3 className="text-xl font-bold text-gray-800 mb-6">Account & Preferences</h3>
               
               <div className="space-y-6">
                 <div>
@@ -267,6 +345,32 @@ function ProfilePage() {
                     {user.role || 'user'}
                   </p>
                 </div>
+
+                {user.preferences?.dietaryRestrictions?.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-gray-700 mb-2">Dietary Restrictions</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {user.preferences.dietaryRestrictions.map((restriction, index) => (
+                        <span key={index} className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                          {restriction}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {user.preferences?.favoriteCategories?.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-gray-700 mb-2">Favorite Categories</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {user.preferences.favoriteCategories.map((category, index) => (
+                        <span key={index} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                          {category}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -336,6 +440,69 @@ function ProfilePage() {
                       className="w-full pl-10 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
                       disabled={loading}
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 mb-2">Date of Birth</label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-gray-700 mb-2">Bio</label>
+                <textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  rows="3"
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="Tell us about yourself..."
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                  <label className="block text-gray-700 mb-2">Dietary Restrictions</label>
+                  <div className="space-y-2">
+                    {['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Nut-Free', 'Halal', 'Kosher'].map(restriction => (
+                      <label key={restriction} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.dietaryRestrictions.includes(restriction)}
+                          onChange={(e) => handleArrayChange('dietaryRestrictions', restriction, e.target.checked)}
+                          className="mr-2"
+                          disabled={loading}
+                        />
+                        <span className="text-sm">{restriction}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 mb-2">Favorite Categories</label>
+                  <div className="space-y-2">
+                    {['burgers', 'pizza', 'pasta', 'salads', 'desserts', 'seafood', 'chicken'].map(category => (
+                      <label key={category} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.favoriteCategories.includes(category)}
+                          onChange={(e) => handleArrayChange('favoriteCategories', category, e.target.checked)}
+                          className="mr-2"
+                          disabled={loading}
+                        />
+                        <span className="text-sm capitalize">{category}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               </div>

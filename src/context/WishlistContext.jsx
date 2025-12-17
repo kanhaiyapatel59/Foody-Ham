@@ -67,10 +67,10 @@ export const WishlistProvider = ({ children }) => {
       } catch (error) {
         console.error('Error removing from wishlist:', error);
         // Fallback to localStorage
-        updateLocalStorageWishlist({ _id: productId }, 'remove');
+        updateLocalStorageWishlist(productId, 'remove');
       }
     } else {
-      updateLocalStorageWishlist({ _id: productId }, 'remove');
+      updateLocalStorageWishlist(productId, 'remove');
     }
   }, [user]);
 
@@ -87,8 +87,9 @@ export const WishlistProvider = ({ children }) => {
           newItems = prevItems;
         }
       } else {
+        const productId = product._id || product.id || product;
         newItems = prevItems.filter(item => 
-          (item.product?._id || item.product?.id) !== product._id
+          (item.product?._id || item.product?.id) !== productId
         );
       }
       
