@@ -138,7 +138,7 @@ function ContactPage() {
                   <FaPhone className="text-white text-2xl" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">Call Us</h3>
-                <p className="text-gray-700 text-lg font-semibold mb-2">+1 (555) 123-4567</p>
+                <p className="text-gray-700 text-lg font-semibold mb-2">+91 83478265444</p>
                 <p className="text-gray-600 text-sm">General Inquiries</p>
               </div>
 
@@ -147,7 +147,7 @@ function ContactPage() {
                   <FaEnvelope className="text-white text-2xl" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">Email Us</h3>
-                <p className="text-gray-700 text-lg font-semibold mb-2">contact@foodyham.com</p>
+                <p className="text-gray-700 text-lg font-semibold mb-2">kanhaiya@foodyham.com</p>
                 <p className="text-gray-600 text-sm">Support & Inquiries</p>
               </div>
 

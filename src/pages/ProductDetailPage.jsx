@@ -44,11 +44,18 @@ function ProductDetailPage() {
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [reviewLoading, setReviewLoading] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const { addToRecentlyViewed } = useRecentlyViewed();
 
   useEffect(() => {
     fetchProduct();
   }, [id]);
+
+  useEffect(() => {
+    if (food && food.category) {
+      fetchRelatedProducts(food.category, food.id);
+    }
+  }, [food?.category, food?.id]);
 
   const fetchProduct = async () => {
     try {
@@ -130,6 +137,30 @@ function ProductDetailPage() {
     }
   };
 
+  const fetchRelatedProducts = async (category, currentProductId) => {
+    try {
+      console.log('Fetching related products for category:', category);
+      const response = await api.get(`/products?category=${category}&limit=8`);
+      if (response.data.success) {
+        console.log('Related products response:', response.data.data);
+        const filtered = response.data.data
+          .filter(product => product._id !== currentProductId)
+          .slice(0, 4)
+          .map(product => ({
+            id: product._id,
+            name: product.name,
+            image: product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop',
+            price: product.price,
+            category: product.category
+          }));
+        console.log('Filtered related products:', filtered);
+        setRelatedProducts(filtered);
+      }
+    } catch (error) {
+      console.error('Error fetching related products:', error);
+    }
+  };
+
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
@@ -203,7 +234,8 @@ function ProductDetailPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50">
+      <div className="container mx-auto px-4 py-12">
       <button 
         onClick={() => navigate(-1)}
         className="text-orange-500 hover:text-orange-600 mb-6 flex items-center"
@@ -222,14 +254,16 @@ function ProductDetailPage() {
         </div>
 
         {/* Product Details */}
-        <div>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
           <h1 className="text-4xl font-bold text-gray-800 mb-4">{food.name}</h1>
           <p className="text-gray-600 text-lg mb-6">{food.description}</p>
           
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Full Description</h2>
-            <p className="text-gray-700">{food.fullDescription}</p>
-          </div>
+          {food.fullDescription && food.fullDescription !== food.description && (
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Full Description</h2>
+              <p className="text-gray-700">{food.fullDescription}</p>
+            </div>
+          )}
 
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Ingredients</h2>
@@ -299,7 +333,7 @@ function ProductDetailPage() {
       </div>
 
       {/* Reviews Section */}
-      <div className="mt-16">
+      <div className="mt-16 bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg">
         <h2 className="text-3xl font-bold text-gray-800 mb-8">Reviews & Ratings</h2>
         
         {/* Add Review Form */}
@@ -369,6 +403,40 @@ function ProductDetailPage() {
             ))
           )}
         </div>
+      </div>
+
+        {/* Related Products Section */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-3xl font-bold text-gray-800 mb-8">You might also like</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map((product) => (
+                <div
+                  key={product.id}
+                  onClick={() => navigate(`/product/${product.id}`)}
+                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 transform"
+                >
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-800 mb-2">{product.name}</h3>
+                    <div className="flex justify-between items-center">
+                      <span className="text-orange-500 font-bold text-lg">
+                        ${product.price.toFixed(2)}
+                      </span>
+                      <span className="text-sm text-gray-500 capitalize">
+                        {product.category}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

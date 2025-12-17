@@ -41,7 +41,7 @@ function WishlistPage() {
         {wishlistItems.map(item => {
           const product = item.product || item;
           return (
-            <div key={product._id || product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            <div key={product._id || product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-105 transform">
               <Link to={`/product/${product._id || product.id}`}>
                 <img 
                   src={product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&auto=format&fit=crop'} 

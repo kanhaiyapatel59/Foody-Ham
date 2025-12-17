@@ -26,6 +26,12 @@ import AdminAnalyticsPage from './pages/AdminAnalyticsPage';
 import AdminCouponsPage from './pages/AdminCouponsPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
+import GroupOrdersPage from './pages/GroupOrdersPage';
+import GroupOrderDetailPage from './pages/GroupOrderDetailPage';
+import ReservationsPage from './pages/ReservationsPage';
+import AdminReservationsPage from './pages/AdminReservationsPage';
+import FoodDiaryPage from './pages/FoodDiaryPage';
+import AdminPromotionsPage from './pages/AdminPromotionsPage';
 
 function App() {
   return (
@@ -138,6 +144,60 @@ function App() {
                 element={
                   <ProtectedRoute requireAdmin> 
                     <AdminOrdersPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/group-orders" 
+                element={
+                  <ProtectedRoute> 
+                    <GroupOrdersPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/group-orders/:id" 
+                element={
+                  <ProtectedRoute> 
+                    <GroupOrderDetailPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/reservations" 
+                element={
+                  <ProtectedRoute> 
+                    <ReservationsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/admin/reservations" 
+                element={
+                  <ProtectedRoute requireAdmin> 
+                    <AdminReservationsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/food-diary" 
+                element={
+                  <ProtectedRoute> 
+                    <FoodDiaryPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              <Route 
+                path="/admin/promotions" 
+                element={
+                  <ProtectedRoute requireAdmin> 
+                    <AdminPromotionsPage />
                   </ProtectedRoute>
                 } 
               />

@@ -1,5 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 const AdminAnalyticsPage = () => {
   const [analytics, setAnalytics] = useState(null);
@@ -96,19 +121,125 @@ const AdminAnalyticsPage = () => {
           </div>
         </div>
 
-        {/* Daily Sales Chart */}
+        {/* Sales Chart */}
         <div className="bg-white p-6 rounded-lg shadow lg:col-span-2">
-          <h3 className="text-lg font-semibold mb-4">Daily Sales</h3>
-          <div className="space-y-2">
-            {analytics?.dailySales?.map((day) => (
-              <div key={day._id} className="flex justify-between items-center py-2 border-b">
-                <span>{day._id}</span>
-                <div className="text-right">
-                  <div className="font-semibold">${day.sales.toFixed(2)}</div>
-                  <div className="text-sm text-gray-500">{day.orders} orders</div>
-                </div>
-              </div>
-            ))}
+          <h3 className="text-lg font-semibold mb-4">Sales Trend</h3>
+          <div className="h-80">
+            <Line
+              data={{
+                labels: analytics?.dailySales?.map(day => day._id) || [],
+                datasets: [
+                  {
+                    label: 'Daily Sales ($)',
+                    data: analytics?.dailySales?.map(day => day.sales) || [],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
+                  title: {
+                    display: true,
+                    text: 'Daily Sales Performance',
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: function(value) {
+                        return '$' + value;
+                      }
+                    }
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Orders Chart */}
+        <div className="bg-white p-6 rounded-lg shadow lg:col-span-2">
+          <h3 className="text-lg font-semibold mb-4">Order Volume</h3>
+          <div className="h-80">
+            <Bar
+              data={{
+                labels: analytics?.dailySales?.map(day => day._id) || [],
+                datasets: [
+                  {
+                    label: 'Daily Orders',
+                    data: analytics?.dailySales?.map(day => day.orders) || [],
+                    backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                    borderColor: 'rgb(34, 197, 94)',
+                    borderWidth: 1,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
+                  title: {
+                    display: true,
+                    text: 'Daily Order Count',
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                  }
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Payment Methods Chart */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-4">Payment Methods Distribution</h3>
+          <div className="h-80">
+            <Doughnut
+              data={{
+                labels: analytics?.paymentMethods?.map(method => method._id) || [],
+                datasets: [
+                  {
+                    data: analytics?.paymentMethods?.map(method => method.count) || [],
+                    backgroundColor: [
+                      'rgba(59, 130, 246, 0.8)',
+                      'rgba(34, 197, 94, 0.8)',
+                      'rgba(251, 191, 36, 0.8)',
+                      'rgba(239, 68, 68, 0.8)',
+                    ],
+                    borderColor: [
+                      'rgb(59, 130, 246)',
+                      'rgb(34, 197, 94)',
+                      'rgb(251, 191, 36)',
+                      'rgb(239, 68, 68)',
+                    ],
+                    borderWidth: 2,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'bottom',
+                  },
+                },
+              }}
+            />
           </div>
         </div>
 

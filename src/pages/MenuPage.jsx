@@ -171,22 +171,23 @@ function MenuPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-gray-900">
-      {/* Fixed Background - **ADJUSTED FOR VISIBILITY** */}
-      <div className="fixed inset-0 w-full h-full z-0 overflow-hidden">
-          <img
-              src={BACKGROUND_IMAGES[bgImageIndex]}
-              alt="Food background"
-              className="w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
-              // 🚨 FIX: Increased brightness to 0.45. The image is now visibly dark/blurred but not totally black.
-              style={{ filter: 'brightness(0.45) blur(3px)' }}
-          />
-          {/* 🚨 Removed the bg-black/60 overlay to further lighten the background */}
-          <div className="absolute inset-0 bg-black/40"></div> {/* Using a lighter 40% overlay instead */}
-      </div>
+    <div className="bg-gray-900">
+      <div className="relative min-h-screen">
+        {/* Fixed Background - **ADJUSTED FOR VISIBILITY** */}
+        <div className="absolute inset-0 w-full h-full z-0 overflow-hidden">
+            <img
+                src={BACKGROUND_IMAGES[bgImageIndex]}
+                alt="Food background"
+                className="w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
+                // 🚨 FIX: Increased brightness to 0.45. The image is now visibly dark/blurred but not totally black.
+                style={{ filter: 'brightness(0.45) blur(3px)' }}
+            />
+            {/* 🚨 Removed the bg-black/60 overlay to further lighten the background */}
+            <div className="absolute inset-0 bg-black/40"></div> {/* Using a lighter 40% overlay instead */}
+        </div>
 
-      {/* Content Container */}
-      <div className="relative z-10 container mx-auto px-4 py-8 md:py-12">
+        {/* Content Container */}
+        <div className="relative z-10 container mx-auto px-4 py-8 md:py-12">
         
         {/* Header Section - Enhanced Visibility */}
         <div className="text-center mb-12 pt-8 p-6 mx-auto max-w-2xl 
@@ -430,17 +431,18 @@ function MenuPage() {
           </div>
         )}
 
-        {/* Footer Note */}
-        <div className="mt-16 text-center pb-8">
-          <p className="text-gray-400 text-sm">
-            Can't find what you're looking for?
-            <button
-              onClick={() => navigate('/contact')}
-              className="ml-2 text-red-500 hover:text-red-600 font-medium transition-colors"
-            >
-              Contact our chef
-            </button>
-          </p>
+          {/* Footer Note */}
+          <div className="mt-16 text-center pb-8">
+            <p className="text-gray-400 text-sm">
+              Can't find what you're looking for?
+              <button
+                onClick={() => navigate('/contact')}
+                className="ml-2 text-red-500 hover:text-red-600 font-medium transition-colors"
+              >
+                Contact our chef
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     </div>

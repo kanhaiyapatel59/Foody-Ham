@@ -58,6 +58,39 @@ function UserSidebar({ isOpen, onClose, user, onLogout }) {
             <span className="font-medium text-gray-700">My Orders</span>
           </Link>
           
+          <Link
+            to="/group-orders"
+            className="flex items-center gap-3 p-4 hover:bg-orange-50 rounded-xl transition-colors group"
+            onClick={onClose}
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg flex items-center justify-center group-hover:from-purple-100 group-hover:to-purple-200">
+              <span className="text-purple-500 text-lg">👥</span>
+            </div>
+            <span className="font-medium text-gray-700">Group Orders</span>
+          </Link>
+          
+          <Link
+            to="/reservations"
+            className="flex items-center gap-3 p-4 hover:bg-orange-50 rounded-xl transition-colors group"
+            onClick={onClose}
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg flex items-center justify-center group-hover:from-indigo-100 group-hover:to-indigo-200">
+              <span className="text-indigo-500 text-lg">🍽️</span>
+            </div>
+            <span className="font-medium text-gray-700">Table Reservations</span>
+          </Link>
+          
+          <Link
+            to="/food-diary"
+            className="flex items-center gap-3 p-4 hover:bg-orange-50 rounded-xl transition-colors group"
+            onClick={onClose}
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg flex items-center justify-center group-hover:from-teal-100 group-hover:to-teal-200">
+              <span className="text-teal-500 text-lg">📊</span>
+            </div>
+            <span className="font-medium text-gray-700">Food Diary</span>
+          </Link>
+          
           <button
             onClick={() => {
               onLogout();

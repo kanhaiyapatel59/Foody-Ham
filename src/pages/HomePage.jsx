@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import FoodCard from '../components/FoodCard';
+import PromotionBanner from '../components/PromotionBanner';
 import axios from 'axios';
 // Import Swiper React components - you'll need to install this
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -229,7 +230,10 @@ function HomePage() {
                     </Link>
                 </div>
                 
-                {/* 🚨 Removed the 'Reviews' section from here as requested. */}
+                {/* Promotion Banner */}
+                <PromotionBanner />
+                
+           
             </div>
 
             {/* Right Content (Rounded Dish Visual) - DIRECTLY MIMICKING DRIBBBLE VISUAL */}
@@ -241,9 +245,9 @@ function HomePage() {
                         alt="Main Feature Pizza Dish"
                         className="w-[85%] h-[85%] object-cover rounded-full shadow-inner shadow-gray-700/50"
                     />
-                    {/* Floating elements (5% discount badge) */}
+                    {/* Floating elements (15% discount badge) */}
                     <div className="absolute top-10 right-0 p-3 bg-red-600 rounded-full shadow-xl flex flex-col items-center justify-center w-16 h-16">
-                        <span className="text-sm font-bold text-white leading-none">5%</span>
+                        <span className="text-sm font-bold text-white leading-none">15% OFF</span>
                         <span className="text-xs text-white leading-none">Voucher</span>
                     </div>
                     {/* Placeholder for floating elements */}

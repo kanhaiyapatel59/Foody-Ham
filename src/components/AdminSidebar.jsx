@@ -80,6 +80,28 @@ function AdminSidebar({ isOpen, onClose, user, onLogout }) {
             <span className="font-medium text-gray-700">Orders</span>
           </Link>
           
+          <Link
+            to="/admin/reservations"
+            className="flex items-center gap-3 p-4 hover:bg-orange-50 rounded-xl transition-colors group"
+            onClick={onClose}
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg flex items-center justify-center group-hover:from-yellow-100 group-hover:to-yellow-200">
+              <span className="text-yellow-500 text-lg">🍽️</span>
+            </div>
+            <span className="font-medium text-gray-700">Reservations</span>
+          </Link>
+          
+          <Link
+            to="/admin/promotions"
+            className="flex items-center gap-3 p-4 hover:bg-orange-50 rounded-xl transition-colors group"
+            onClick={onClose}
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg flex items-center justify-center group-hover:from-pink-100 group-hover:to-pink-200">
+              <span className="text-pink-500 text-lg">🎉</span>
+            </div>
+            <span className="font-medium text-gray-700">Promotions</span>
+          </Link>
+          
           <div className="border-t border-gray-200 my-4"></div>
           
           <Link

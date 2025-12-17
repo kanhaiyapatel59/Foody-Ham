@@ -57,7 +57,9 @@ function AddProductPage() {
     fat: '',
     category: 'burgers',
     isFeatured: false,
-    preparationTime: '30'
+    preparationTime: '30',
+    stock: '50',
+    lowStockThreshold: '10'
   });
 
   // State for added products
@@ -142,7 +144,9 @@ function AddProductPage() {
         },
         category: formData.category,
         isFeatured: formData.isFeatured,
-        preparationTime: parseInt(formData.preparationTime) || 30
+        preparationTime: parseInt(formData.preparationTime) || 30,
+        stock: parseInt(formData.stock) || 0,
+        lowStockThreshold: parseInt(formData.lowStockThreshold) || 5
       };
 
       const response = await api.post('/products', productData);
@@ -166,9 +170,11 @@ function AddProductPage() {
           protein: '',
           carbs: '',
           fat: '',
-          category: '',
+          category: 'burgers',
           isFeatured: false,
-          preparationTime: '30'
+          preparationTime: '30',
+          stock: '50',
+          lowStockThreshold: '10'
         });
 
         setTimeout(() => {
@@ -532,6 +538,39 @@ function AddProductPage() {
                   </div>
                 </div>
 
+                {/* Stock Management Section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-200">
+                  <div>
+                    <label className="block text-gray-800 font-semibold mb-3">
+                      📦 Stock Quantity
+                    </label>
+                    <input
+                      type="number"
+                      name="stock"
+                      value={formData.stock}
+                      onChange={handleChange}
+                      className="w-full px-5 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
+                      disabled={loading}
+                      min="0"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-800 font-semibold mb-3">
+                      ⚠️ Low Stock Alert (Threshold)
+                    </label>
+                    <input
+                      type="number"
+                      name="lowStockThreshold"
+                      value={formData.lowStockThreshold}
+                      onChange={handleChange}
+                      className="w-full px-5 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-300"
+                      disabled={loading}
+                      min="1"
+                    />
+                  </div>
+                </div>
+
                 {/* Form Navigation */}
                 <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
                   <div className="space-x-3">
@@ -652,11 +691,20 @@ function AddProductPage() {
                         <button className="text-sm text-gray-600 hover:text-orange-500 transition-colors flex items-center gap-2 group/view">
                           <FaEye /> View Details
                         </button>
-                        {product.nutritionalInfo?.calories > 0 && (
-                          <span className="text-xs text-gray-500">
-                            {product.nutritionalInfo.calories} kcal
-                          </span>
-                        )}
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          {product.nutritionalInfo?.calories > 0 && (
+                            <span>{product.nutritionalInfo.calories} kcal</span>
+                          )}
+                          {product.stock !== undefined && (
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              (product.stock || 0) <= (product.lowStockThreshold || 5) 
+                                ? 'bg-red-100 text-red-600' 
+                                : 'bg-green-100 text-green-600'
+                            }`}>
+                              Stock: {product.stock || 0}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}

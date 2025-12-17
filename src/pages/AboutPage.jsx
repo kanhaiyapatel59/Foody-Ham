@@ -303,30 +303,30 @@ function AboutPage() {
               {
                 name: "Kanhaiya Patel",
                 role: "Head Chef & Founder",
-                image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                image: "https://scontent.fcjb9-1.fna.fbcdn.net/v/t51.82787-15/518490686_18040697312640591_920984695367973955_n.webp?stp=dst-jpg_tt6&_nc_cat=103&ccb=1-7&_nc_sid=127cfc&_nc_ohc=_loR3isYy4QQ7kNvwElzzE8&_nc_oc=AdnbPUsmEhxL_HgrKTnKgjqidkATUBza1D_yk-LFbt8L-D5lfXPt3QRYetExVLquozo&_nc_zt=23&_nc_ht=scontent.fcjb9-1.fna&_nc_gid=NE7FJZVny523Xovq7kua_w&oh=00_Afl47ScqZeu-jcT2oPIPMhDpRIfM1wEh0f5stnkbIu7Vyw&oe=6948B475",
                 expertise: "French & Italian Cuisine",
-                experience: "15+ years"
+                experience: "3+ years"
               },
               {
                 name: "Manish Basnet",
                 role: "Operations Director",
-                image: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                image: "https://scontent.fcjb9-1.fna.fbcdn.net/v/t39.30808-6/518351121_1113165284207358_2673730983408966392_n.jpg?stp=dst-jpg_s1080x2048_tt6&_nc_cat=108&ccb=1-7&_nc_sid=127cfc&_nc_ohc=qfDXiWv48X4Q7kNvwHBy75i&_nc_oc=Adk1dYBHTdIeZRnUQJZhmY_BYdep0ZSO0aGhmHt4KKSKv6CQ93HdodoIERIh5RBgXbM&_nc_zt=23&_nc_ht=scontent.fcjb9-1.fna&_nc_gid=M_DPbH9It5u0Nv2TwU72SQ&oh=00_AflEQPBR6ccYU1rzGsBDxLBVZQrkiEiA1Kgjp2NBi34PFA&oe=6948AD24",
                 expertise: "Logistics & Service",
-                experience: "12+ years"
+                experience: "2+ years"
               },
               {
                 name: "Mansur Ansari",
                 role: "Delivery Manager",
-                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                image: "https://scontent.fcjb9-1.fna.fbcdn.net/v/t1.6435-9/109987350_171589127736219_8436484495003339226_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=cn7puPQhXx4Q7kNvwEJj_38&_nc_oc=Adn0UQq8fG-S0OXT_43nSunf-EIjU1wpNCJ5OGsQSjthV06ttby7aaSPTIsqR5WeeEY&_nc_zt=23&_nc_ht=scontent.fcjb9-1.fna&_nc_gid=cCN4h8j3MFy2T9qhkG2rfQ&oh=00_Afk6woGMfq3McKmI_W92U1MNrXVNXsIk7kveEzmGBvpj1g&oe=696A6255",
                 expertise: "Supply Chain Management",
-                experience: "10+ years"
+                experience: "2+ years"
               },
               {
                 name: "Jp Shah",
                 role: "Marketing Director",
-                image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+                image: "https://scontent.fcjb9-1.fna.fbcdn.net/v/t39.30808-6/482322510_1180268196803307_8207768455086781827_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=ymiG6AtZkFgQ7kNvwHoqu4u&_nc_oc=AdnAjFj2YynggTBQLCrwqi1IzNLJyv9KPC7atZOFazvHcTQ7qa90OF_el9p8asBhK1E&_nc_zt=23&_nc_ht=scontent.fcjb9-1.fna&_nc_gid=xIdVdGYPe3-sk9Q8j_bnng&oh=00_Afn1ODRu03VnNTEjtysXuwTXfk4vVOIwsdYrI01zDb6qyg&oe=6948C03E",
                 expertise: "Brand Strategy",
-                experience: "8+ years"
+                experience: "2+ years"
               }
             ].map((member, index) => (
               <div 

@@ -21,6 +21,12 @@ function PaymentPage() {
     cvv: '',
     name: ''
   });
+  const [shippingAddress, setShippingAddress] = useState({
+    address: '',
+    city: '',
+    postalCode: '',
+    country: ''
+  });
 
   // Get order data from location state
   const orderData = location.state?.orderData;
@@ -55,6 +61,7 @@ function PaymentPage() {
         },
         body: JSON.stringify({
           ...orderData,
+          shippingAddress,
           paymentMethod,
           paymentStatus: paymentMethod === 'cash' ? 'pending' : 'completed',
           coupon: appliedCoupon ? {
@@ -148,6 +155,47 @@ function PaymentPage() {
                 />
                 💰 Cash on Delivery
               </label>
+            </div>
+          </div>
+
+          {/* Shipping Address Form */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-4">Shipping Address</h3>
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder="Street Address"
+                value={shippingAddress.address}
+                onChange={(e) => setShippingAddress({...shippingAddress, address: e.target.value})}
+                className="w-full p-3 border rounded-lg"
+                required
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="City"
+                  value={shippingAddress.city}
+                  onChange={(e) => setShippingAddress({...shippingAddress, city: e.target.value})}
+                  className="w-full p-3 border rounded-lg"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Postal Code"
+                  value={shippingAddress.postalCode}
+                  onChange={(e) => setShippingAddress({...shippingAddress, postalCode: e.target.value})}
+                  className="w-full p-3 border rounded-lg"
+                  required
+                />
+              </div>
+              <input
+                type="text"
+                placeholder="Country"
+                value={shippingAddress.country}
+                onChange={(e) => setShippingAddress({...shippingAddress, country: e.target.value})}
+                className="w-full p-3 border rounded-lg"
+                required
+              />
             </div>
           </div>
 
